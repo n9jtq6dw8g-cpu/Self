@@ -1,7 +1,8 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f2f2f7;
+  margin: 0;
   padding: 16px;
+  background: #f5f5f5;
 }
 
 h1 {
@@ -10,37 +11,30 @@ h1 {
 
 .card {
   background: white;
-  border-radius: 14px;
   padding: 16px;
+  border-radius: 12px;
   margin-bottom: 16px;
 }
 
-input, select {
+input, select, button {
   width: 100%;
+  margin-top: 8px;
   padding: 10px;
-  margin-bottom: 10px;
+  font-size: 16px;
 }
 
 button {
-  width: 100%;
-  padding: 12px;
-  background: #007aff;
+  background: black;
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .weekdays {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.weekdays label {
-  background: #e5e5ea;
-  padding: 6px 10px;
-  border-radius: 6px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .hidden {
@@ -48,36 +42,31 @@ button {
 }
 
 .activity-item {
-  margin-bottom: 8px;
-}
-
-.progress {
-  background: #e5e5ea;
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.progress div {
-  height: 8px;
-  background: #34c759;
+  border-bottom: 1px solid #eee;
+  padding: 8px 0;
 }
 
 .tabs {
   display: flex;
   gap: 8px;
+  margin: 8px 0;
 }
 
 .tab {
   flex: 1;
-  background: #e5e5ea;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  background: #ddd;
 }
 
 .tab.active {
-  background: #007aff;
+  background: black;
   color: white;
 }
 
-.backup {
-  border-left: 4px solid #ff9f0a;
+#stats {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.6;
 }
