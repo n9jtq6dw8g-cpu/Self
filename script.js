@@ -1,29 +1,39 @@
 const ACT_KEY = "activities";
 const LOG_KEY = "logs";
+const THEME_KEY = "theme";
 
 let currentRange = "daily";
-
-const ranges = {
-  daily: 14,
-  weekly: 56,
-  monthly: 180,
-  yearly: 730
-};
+const ranges = { daily: 14, weekly: 56, monthly: 180, yearly: 730 };
 
 function today() {
   return new Date().toISOString().split("T")[0];
 }
 
-function load(key) {
-  return JSON.parse(localStorage.getItem(key)) || {};
+function load(k) {
+  return JSON.parse(localStorage.getItem(k)) || {};
 }
 
-function save(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
+function save(k, v) {
+  localStorage.setItem(k, JSON.stringify(v));
 }
+
+/* ---------- NAV ---------- */
+document.querySelectorAll(".nav").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".nav, .tab").forEach(e => e.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  };
+});
+
+/* ---------- THEME ---------- */
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem(THEME_KEY, document.body.classList.contains("dark"));
+}
+if (localStorage.getItem(THEME_KEY) === "true") document.body.classList.add("dark");
 
 /* ---------- ACTIVITY ---------- */
-
 function toggleWeekdays() {
   weekdays.classList.toggle("hidden", actFreq.value !== "custom");
 }
@@ -32,26 +42,32 @@ function saveActivity() {
   const acts = load(ACT_KEY);
   const id = actName.value.toLowerCase().replace(/\s+/g, "_");
 
-  let days = [];
-  document.querySelectorAll("#weekdays input:checked")
-    .forEach(cb => days.push(cb.value));
-
-  const start = today();
-  const end = addMonths(start, Number(actDuration.value));
+  const days = [...document.querySelectorAll("#weekdays input:checked")].map(i => i.value);
+  const startDate = today();
+  const endDate = addMonths(startDate, Number(actDuration.value));
 
   acts[id] = {
     name: actName.value,
     unit: actUnit.value,
     goal: Number(actGoal.value),
-    sets: Number(actSets.value || 1),
-    time: actTime.value || "07:00",
+    startTime: actStart.value,
+    endTime: actEnd.value,
     frequency: actFreq.value,
     days,
-    calendar: { start, end },
+    calendar: { startDate, endDate },
+    active: true,
     streak: 0,
-    bestStreak: 0
+    bestStreak: acts[id]?.bestStreak || 0
   };
 
+  save(ACT_KEY, acts);
+  renderAll();
+}
+
+function togglePause(id) {
+  const acts = load(ACT_KEY);
+  acts[id].active = !acts[id].active;
+  acts[id].streak = 0;
   save(ACT_KEY, acts);
   renderAll();
 }
@@ -62,10 +78,15 @@ function renderActivities() {
 
   Object.entries(acts).forEach(([id, a]) => {
     activityList.innerHTML += `
-      <div class="activity-item">
+      <div class="${a.active ? "" : "paused"}">
         <strong>${a.name}</strong><br/>
-        Streak: ${a.streak} | Best: ${a.bestStreak}<br/>
-        <button onclick="exportCalendar('${id}')">Export Calendar</button>
+        ${a.startTime}–${a.endTime}<br/>
+        <button onclick="exportCalendar('${id}')" ${!a.active ? "disabled" : ""}>
+          Export Calendar
+        </button>
+        <button onclick="togglePause('${id}')">
+          ${a.active ? "Pause" : "Resume"}
+        </button>
       </div>
     `;
   });
@@ -75,55 +96,69 @@ function renderActivities() {
     .join("");
 }
 
-/* ---------- DAILY LOG ---------- */
+/* ---------- LOGGING ---------- */
+logDate.value = today();
 
 function renderLogInputs() {
   const acts = load(ACT_KEY);
-  logForm.innerHTML = "";
+  logInputs.innerHTML = "";
 
   Object.entries(acts).forEach(([id, a]) => {
-    const i = document.createElement("input");
-    i.type = "number";
-    i.placeholder = `${a.name} (${a.unit})`;
-    i.dataset.id = id;
-    logForm.appendChild(i);
+    if (!a.active) return;
+
+    logInputs.innerHTML += `
+      <label>${a.name}</label>
+      <input type="number" onkeydown="addSet(event,'${id}')" />
+      <div id="sets-${id}"></div>
+    `;
+    renderSets(id, logDate.value);
   });
 }
 
-function saveLog() {
+function addSet(e, id) {
+  if (e.key !== "Enter") return;
+  const val = Number(e.target.value);
+  if (!val) return;
+
   const logs = load(LOG_KEY);
-  const acts = load(ACT_KEY);
-  const d = today();
-
+  const d = logDate.value;
   logs[d] = logs[d] || {};
-
-  document.querySelectorAll("#logForm input").forEach(i => {
-    const v = Number(i.value || 0);
-    logs[d][i.dataset.id] = v;
-
-    if (v > 0) {
-      acts[i.dataset.id].streak++;
-      acts[i.dataset.id].bestStreak = Math.max(
-        acts[i.dataset.id].bestStreak,
-        acts[i.dataset.id].streak
-      );
-    } else {
-      acts[i.dataset.id].streak = 0;
-    }
-  });
+  logs[d][id] = logs[d][id] || [];
+  logs[d][id].push(val);
 
   save(LOG_KEY, logs);
-  save(ACT_KEY, acts);
-  renderActivities();
+  e.target.value = "";
+  renderSets(id, d);
 }
 
-/* ---------- SUMMARY GRAPH ---------- */
+function renderSets(id, d) {
+  const sets = load(LOG_KEY)[d]?.[id] || [];
+  const container = document.getElementById(`sets-${id}`);
+  if (!container) return;
 
-document.querySelectorAll(".tab").forEach(t => {
-  t.onclick = () => {
-    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-    t.classList.add("active");
-    currentRange = t.dataset.range;
+  container.innerHTML = sets
+    .map((v, i) => `<span class="set" onclick="editSet('${id}','${d}',${i})">${v}</span>`)
+    .join("");
+}
+
+function editSet(id, d, i) {
+  const logs = load(LOG_KEY);
+  const val = prompt("Edit value or leave empty to delete", logs[d][id][i]);
+  if (val === null) return;
+
+  if (val === "") logs[d][id].splice(i, 1);
+  else logs[d][id][i] = Number(val);
+
+  save(LOG_KEY, logs);
+  renderSets(id, d);
+}
+
+/* ---------- SUMMARY ---------- */
+document.querySelectorAll(".range").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".range").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    currentRange = b.dataset.range;
     renderSummary();
   };
 });
@@ -133,38 +168,33 @@ function renderSummary() {
   if (!id) return;
 
   const logs = load(LOG_KEY);
-  const ctx = chart.getContext("2d");
-  ctx.clearRect(0, 0, chart.width, chart.height);
-
-  const days = ranges[currentRange];
   const data = [];
+  const days = ranges[currentRange];
 
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const key = d.toISOString().split("T")[0];
-    data.push(logs[key]?.[id] || 0);
+    const sets = logs[key]?.[id] || [];
+    data.push(sets.reduce((a, b) => a + b, 0));
   }
 
-  drawLine(ctx, data);
+  drawGraph(data);
   renderStats(data);
 }
 
-function drawLine(ctx, data) {
-  const w = chart.width;
-  const h = chart.height;
+function drawGraph(data) {
+  const ctx = chart.getContext("2d");
+  ctx.clearRect(0, 0, chart.width, chart.height);
+
   const max = Math.max(...data, 1);
-
   ctx.beginPath();
-  ctx.strokeStyle = "black";
-
   data.forEach((v, i) => {
-    const x = (i / (data.length - 1)) * w;
-    const y = h - (v / max) * h;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+    const x = (i / (data.length - 1)) * chart.width;
+    const y = chart.height - (v / max) * chart.height;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
-
+  ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--accent");
   ctx.stroke();
 }
 
@@ -176,16 +206,18 @@ function renderStats(data) {
 
   stats.innerHTML = `
     Total: ${total}<br/>
-    Daily Average: ${avg}<br/>
+    Daily Avg: ${avg}<br/>
     Best Day: ${best}<br/>
     Active Days: ${active}
   `;
 }
 
 /* ---------- CALENDAR ---------- */
-
 function exportCalendar(id) {
   const a = load(ACT_KEY)[id];
+  if (!a.active) return;
+
+  const until = a.calendar.endDate.replace(/-/g,"");
   const rrule =
     a.frequency === "alternate"
       ? "FREQ=DAILY;INTERVAL=2"
@@ -197,9 +229,9 @@ function exportCalendar(id) {
 BEGIN:VCALENDAR
 BEGIN:VEVENT
 SUMMARY:${a.name}
-DTSTART:${a.calendar.start.replace(/-/g,"")}T${a.time.replace(":","")}00
-DTEND:${a.calendar.end.replace(/-/g,"")}T${a.time.replace(":","")}00
-RRULE:${rrule}
+DTSTART:${a.calendar.startDate.replace(/-/g,"")}T${a.startTime.replace(":","")}00
+DTEND:${a.calendar.startDate.replace(/-/g,"")}T${a.endTime.replace(":","")}00
+RRULE:${rrule};UNTIL=${until}
 END:VEVENT
 END:VCALENDAR
 `;
@@ -212,7 +244,6 @@ END:VCALENDAR
 }
 
 /* ---------- BACKUP ---------- */
-
 function downloadBackup() {
   const blob = new Blob(
     [JSON.stringify({ activities: load(ACT_KEY), logs: load(LOG_KEY) }, null, 2)],
@@ -236,7 +267,6 @@ function importBackup(e) {
 }
 
 /* ---------- UTILS ---------- */
-
 function addMonths(date, m) {
   const d = new Date(date);
   d.setMonth(d.getMonth() + m);
