@@ -63,9 +63,7 @@ function saveActivity() {
       startDate: acts[id]?.calendar?.startDate || today(),
       endDate: addMonths(today(), Number(actDuration.value))
     },
-    active: acts[id]?.active ?? true,
-    streak: 0,
-    bestStreak: acts[id]?.bestStreak || 0
+    active: true
   };
 
   save(ACT_KEY, acts);
@@ -85,11 +83,6 @@ function editActivity(id) {
   actStart.value = a.startTime;
   actEnd.value = a.endTime;
   actFreq.value = a.frequency;
-  actDuration.value = "3";
-
-  document.querySelectorAll("#weekdays input").forEach(cb => {
-    cb.checked = a.days.includes(cb.value);
-  });
   toggleWeekdays();
 }
 
@@ -97,13 +90,11 @@ function resetActivityForm() {
   editId = null;
   activityFormTitle.textContent = "Add Activity";
   saveActivityBtn.textContent = "Save Activity";
-
   actName.value = "";
   actGoal.value = "";
   actStart.value = "";
   actEnd.value = "";
   actFreq.value = "daily";
-  actDuration.value = "3";
   document.querySelectorAll("#weekdays input").forEach(i => i.checked = false);
   toggleWeekdays();
 }
@@ -111,7 +102,6 @@ function resetActivityForm() {
 function togglePause(id) {
   const acts = load(ACT_KEY);
   acts[id].active = !acts[id].active;
-  acts[id].streak = 0;
   save(ACT_KEY, acts);
   renderAll();
 }
@@ -126,12 +116,8 @@ function renderActivities() {
         <strong>${a.name}</strong><br/>
         ${a.startTime}–${a.endTime}<br/>
         <button onclick="editActivity('${a.id}')">Edit</button>
-        <button onclick="exportCalendar('${a.id}')" ${!a.active ? "disabled" : ""}>
-          Export Calendar
-        </button>
-        <button onclick="togglePause('${a.id}')">
-          ${a.active ? "Pause" : "Resume"}
-        </button>
+        <button onclick="exportCalendar('${a.id}')">Export</button>
+        <button onclick="togglePause('${a.id}')">${a.active ? "Pause" : "Resume"}</button>
       </div>
     `;
   });
@@ -153,11 +139,10 @@ function renderLogInputs() {
 
     logInputs.innerHTML += `
       <label>${a.name}</label>
-      <input type="number" id="input-${a.id}" placeholder="Enter value" />
-      <button onclick="addSet('${a.id}')">Add Set</button>
+      <input type="number" id="input-${a.id}" />
+      <button onclick="addSet('${a.id}')">Add</button>
       <div id="sets-${a.id}"></div>
     `;
-    renderSets(a.id, logDate.value);
   });
 }
 
@@ -171,13 +156,11 @@ function addSet(id) {
   logs[d] = logs[d] || {};
   logs[d][id] = logs[d][id] || [];
   logs[d][id].push(val);
-
   save(LOG_KEY, logs);
   input.value = "";
-  renderSets(id, d);
 }
 
-/* SUMMARY GRAPH */
+/* SUMMARY */
 document.querySelectorAll(".range").forEach(b => {
   b.onclick = () => {
     document.querySelectorAll(".range").forEach(x => x.classList.remove("active"));
@@ -193,6 +176,7 @@ function renderSummary() {
 
   const logs = load(LOG_KEY);
   const data = [];
+
   for (let i = ranges[currentRange] - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
@@ -200,43 +184,44 @@ function renderSummary() {
     const sets = logs[key]?.[id] || [];
     data.push(sets.reduce((a, b) => a + b, 0));
   }
-  drawGraph(data, load(ACT_KEY)[id].unit);
+
+  drawGraph(data);
+  updateMetrics(data);
 }
 
-function drawGraph(data, unit) {
+function drawGraph(data) {
   const ctx = chart.getContext("2d");
   ctx.clearRect(0, 0, chart.width, chart.height);
 
   const max = Math.max(...data, 1);
-  const padding = 40;
-  const w = chart.width - padding * 2;
-  const h = chart.height - padding * 2;
-
-  ctx.strokeStyle = "#e5e7eb";
-  ctx.fillStyle = "#6b7280";
-  ctx.font = "12px sans-serif";
-
-  for (let i = 0; i <= 4; i++) {
-    const y = padding + (h / 4) * i;
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(chart.width - padding, y);
-    ctx.stroke();
-    ctx.fillText(Math.round(max - (max / 4) * i), 5, y + 4);
-  }
+  const pad = 32;
+  const w = chart.width - pad * 2;
+  const h = chart.height - pad * 2;
 
   ctx.beginPath();
   data.forEach((v, i) => {
-    const x = padding + (i / (data.length - 1)) * w;
-    const y = padding + h - (v / max) * h;
+    const x = pad + (i / (data.length - 1)) * w;
+    const y = pad + h - (v / max) * h;
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
 
   ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--accent");
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
   ctx.stroke();
+}
 
-  ctx.fillText(unit, chart.width - 30, padding - 10);
+function updateMetrics(data) {
+  const total = data.reduce((a, b) => a + b, 0);
+  const active = data.filter(v => v > 0).length;
+  const avg = active ? Math.round(total / active) : 0;
+  const best = Math.max(...data);
+
+  mTotal.textContent = total;
+  mAvg.textContent = avg;
+  mBest.textContent = best;
+  mActive.textContent = active;
 }
 
 /* CALENDAR */
@@ -267,15 +252,11 @@ END:VCALENDAR
 
   const blob = new Blob([ics.trim()], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const aEl = document.createElement("a");
-  aEl.href = url;
-  aEl.download = `${a.name}-${Date.now()}.ics`;
-  document.body.appendChild(aEl);
-  aEl.click();
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-    aEl.remove();
-  }, 500);
+  const el = document.createElement("a");
+  el.href = url;
+  el.download = `${a.name}-${Date.now()}.ics`;
+  el.click();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 
 /* UTILS */
