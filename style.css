@@ -2,21 +2,21 @@
   --bg: #f6f7f9;
   --card: #ffffff;
   --text: #111;
-  --accent: #111;
-  --border: #ddd;
+  --accent: #2563eb;
+  --border: #e5e7eb;
 }
 
 body.dark {
-  --bg: #0f0f11;
-  --card: #1c1c1e;
-  --text: #ffffff;
-  --accent: #ffffff;
-  --border: #333;
+  --bg: #0f172a;
+  --card: #111827;
+  --text: #f9fafb;
+  --accent: #60a5fa;
+  --border: #1f2937;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
   background: var(--bg);
   color: var(--text);
 }
@@ -52,17 +52,17 @@ header {
 
 .card {
   background: var(--card);
-  padding: 16px;
-  border-radius: 14px;
+  padding: 18px;
+  border-radius: 16px;
   margin-bottom: 16px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
 input, select, button {
   width: 100%;
   padding: 12px;
   margin-top: 10px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
@@ -71,7 +71,7 @@ input, select, button {
 
 button {
   background: var(--accent);
-  color: var(--bg);
+  color: white;
   border: none;
 }
 
@@ -81,19 +81,30 @@ button {
   gap: 8px;
 }
 
-.hidden {
-  display: none;
+.time-row {
+  display: flex;
+  gap: 12px;
 }
 
-.set {
-  display: inline-block;
-  padding: 6px 10px;
-  margin: 6px 6px 0 0;
-  border-radius: 8px;
-  background: var(--border);
-  cursor: pointer;
+.activity {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.activity button {
+  margin-top: 6px;
 }
 
 .paused {
   opacity: 0.5;
+}
+
+canvas {
+  margin-top: 10px;
+}
+
+#stats {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.6;
 }
