@@ -2,25 +2,23 @@ const ACT_KEY = "activities";
 const LOG_KEY = "logs";
 const THEME_KEY = "theme";
 
-let editId = null;
-let currentRange = "daily";
-const ranges = { daily: 14, weekly: 56, monthly: 180, yearly: 730 };
+let currentRange = "weekly";
+const ranges = { daily: 14, weekly: 7, monthly: 30, yearly: 365 };
 
 const chart = document.getElementById("chart");
 
+/* ---------- BASIC UTILS ---------- */
 function today() {
   return new Date().toISOString().split("T")[0];
 }
-
 function load(k) {
   return JSON.parse(localStorage.getItem(k)) || {};
 }
-
 function save(k, v) {
   localStorage.setItem(k, JSON.stringify(v));
 }
 
-/* NAV */
+/* ---------- NAV ---------- */
 document.querySelectorAll(".nav").forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll(".nav, .tab").forEach(e => e.classList.remove("active"));
@@ -29,105 +27,17 @@ document.querySelectorAll(".nav").forEach(btn => {
   };
 });
 
-/* THEME */
-function toggleTheme() {
-  document.body.classList.toggle("dark");
-  localStorage.setItem(THEME_KEY, document.body.classList.contains("dark"));
-}
-if (localStorage.getItem(THEME_KEY) === "true") document.body.classList.add("dark");
-
-/* ACTIVITY */
-function toggleWeekdays() {
-  weekdays.classList.toggle("hidden", actFreq.value !== "custom");
-}
-
-function saveActivity() {
-  if (!actName.value) return alert("Activity name required");
-  if (!actStart.value || !actEnd.value || actStart.value >= actEnd.value)
-    return alert("Invalid time range");
-
-  const acts = load(ACT_KEY);
-  const id = editId || actName.value.toLowerCase().replace(/\s+/g, "_");
-
-  acts[id] = {
-    id,
-    uid: acts[id]?.uid || crypto.randomUUID(),
-    name: actName.value,
-    unit: actUnit.value,
-    goal: Number(actGoal.value),
-    startTime: actStart.value,
-    endTime: actEnd.value,
-    frequency: actFreq.value,
-    days: [...document.querySelectorAll("#weekdays input:checked")].map(i => i.value),
-    calendar: {
-      startDate: acts[id]?.calendar?.startDate || today(),
-      endDate: addMonths(today(), Number(actDuration.value))
-    },
-    active: true
+/* ---------- RANGE DROPDOWN ---------- */
+rangeBtn.onclick = () => rangeMenu.classList.toggle("hidden");
+rangeMenu.querySelectorAll("div").forEach(opt => {
+  opt.onclick = () => {
+    currentRange = opt.dataset.range;
+    rangeMenu.classList.add("hidden");
+    renderSummary();
   };
+});
 
-  save(ACT_KEY, acts);
-  resetActivityForm();
-  renderAll();
-}
-
-function editActivity(id) {
-  const a = load(ACT_KEY)[id];
-  editId = id;
-  activityFormTitle.textContent = "Edit Activity";
-  saveActivityBtn.textContent = "Update Activity";
-
-  actName.value = a.name;
-  actUnit.value = a.unit;
-  actGoal.value = a.goal;
-  actStart.value = a.startTime;
-  actEnd.value = a.endTime;
-  actFreq.value = a.frequency;
-  toggleWeekdays();
-}
-
-function resetActivityForm() {
-  editId = null;
-  activityFormTitle.textContent = "Add Activity";
-  saveActivityBtn.textContent = "Save Activity";
-  actName.value = "";
-  actGoal.value = "";
-  actStart.value = "";
-  actEnd.value = "";
-  actFreq.value = "daily";
-  document.querySelectorAll("#weekdays input").forEach(i => i.checked = false);
-  toggleWeekdays();
-}
-
-function togglePause(id) {
-  const acts = load(ACT_KEY);
-  acts[id].active = !acts[id].active;
-  save(ACT_KEY, acts);
-  renderAll();
-}
-
-function renderActivities() {
-  const acts = load(ACT_KEY);
-  activityList.innerHTML = "";
-
-  Object.values(acts).forEach(a => {
-    activityList.innerHTML += `
-      <div class="activity ${a.active ? "" : "paused"}">
-        <strong>${a.name}</strong><br/>
-        ${a.startTime}–${a.endTime}<br/>
-        <button onclick="editActivity('${a.id}')">Edit</button>
-        <button onclick="exportCalendar('${a.id}')">Export</button>
-        <button onclick="togglePause('${a.id}')">${a.active ? "Pause" : "Resume"}</button>
-      </div>
-    `;
-  });
-
-  summaryActivity.innerHTML = Object.values(acts)
-    .map(a => `<option value="${a.id}">${a.name}</option>`)
-    .join("");
-}
-
-/* LOG */
+/* ---------- LOG ---------- */
 logDate.value = today();
 
 function renderLogInputs() {
@@ -136,12 +46,10 @@ function renderLogInputs() {
 
   Object.values(acts).forEach(a => {
     if (!a.active) return;
-
     logInputs.innerHTML += `
       <label>${a.name}</label>
-      <input type="number" id="input-${a.id}" />
+      <input type="number" id="input-${a.id}">
       <button onclick="addSet('${a.id}')">Add</button>
-      <div id="sets-${a.id}"></div>
     `;
   });
 }
@@ -160,43 +68,72 @@ function addSet(id) {
   input.value = "";
 }
 
-/* SUMMARY */
-document.querySelectorAll(".range").forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll(".range").forEach(x => x.classList.remove("active"));
-    b.classList.add("active");
-    currentRange = b.dataset.range;
-    renderSummary();
-  };
-});
-
+/* ---------- SUMMARY ---------- */
 function renderSummary() {
   const id = summaryActivity.value;
   if (!id) return;
 
   const logs = load(LOG_KEY);
   const data = [];
+  const labels = [];
+  const days = ranges[currentRange];
 
-  for (let i = ranges[currentRange] - 1; i >= 0; i--) {
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const key = d.toISOString().split("T")[0];
     const sets = logs[key]?.[id] || [];
     data.push(sets.reduce((a, b) => a + b, 0));
+
+    if (currentRange === "weekly") {
+      labels.push(d.toLocaleDateString(undefined, { weekday: "short" }));
+    } else if (currentRange === "daily") {
+      labels.push(d.getDate());
+    } else {
+      labels.push(i % 7 === 0 ? d.getDate() : "");
+    }
   }
 
-  drawGraph(data);
+  drawGraph(data, labels);
   updateMetrics(data);
 }
 
-function drawGraph(data) {
+function drawGraph(data, labels) {
   const ctx = chart.getContext("2d");
-  ctx.clearRect(0, 0, chart.width, chart.height);
+  const dpr = window.devicePixelRatio || 1;
 
+  const cssW = chart.clientWidth;
+  const cssH = chart.clientHeight;
+
+  chart.width = cssW * dpr;
+  chart.height = cssH * dpr;
+  ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  const pad = 36;
+  const w = cssW - pad * 2;
+  const h = cssH - pad * 2;
   const max = Math.max(...data, 1);
-  const pad = 32;
-  const w = chart.width - pad * 2;
-  const h = chart.height - pad * 2;
+
+  ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--grid");
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--muted");
+  ctx.font = "12px sans-serif";
+
+  for (let i = 0; i <= 4; i++) {
+    const y = pad + (h / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(cssW - pad, y);
+    ctx.stroke();
+    ctx.fillText(Math.round(max - (max / 4) * i), 4, y + 4);
+  }
+
+  labels.forEach((l, i) => {
+    if (!l) return;
+    const x = pad + (i / (labels.length - 1)) * w;
+    ctx.fillText(l, x - 8, cssH - 6);
+  });
 
   ctx.beginPath();
   data.forEach((v, i) => {
@@ -224,50 +161,8 @@ function updateMetrics(data) {
   mActive.textContent = active;
 }
 
-/* CALENDAR */
-function exportCalendar(id) {
-  const a = load(ACT_KEY)[id];
-  if (!a.active) return;
-
-  const until = a.calendar.endDate.replace(/-/g, "");
-  const rrule =
-    a.frequency === "alternate"
-      ? "FREQ=DAILY;INTERVAL=2"
-      : a.frequency === "custom"
-      ? `FREQ=WEEKLY;BYDAY=${a.days.join(",")}`
-      : "FREQ=DAILY";
-
-  const ics = `
-BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-UID:${a.uid}
-SUMMARY:${a.name}
-DTSTART:${a.calendar.startDate.replace(/-/g,"")}T${a.startTime.replace(":","")}00
-DTEND:${a.calendar.startDate.replace(/-/g,"")}T${a.endTime.replace(":","")}00
-RRULE:${rrule};UNTIL=${until}
-END:VEVENT
-END:VCALENDAR
-`;
-
-  const blob = new Blob([ics.trim()], { type: "text/calendar;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const el = document.createElement("a");
-  el.href = url;
-  el.download = `${a.name}-${Date.now()}.ics`;
-  el.click();
-  setTimeout(() => URL.revokeObjectURL(url), 500);
-}
-
-/* UTILS */
-function addMonths(date, m) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + m);
-  return d.toISOString().split("T")[0];
-}
-
+/* ---------- INIT ---------- */
 function renderAll() {
-  renderActivities();
   renderLogInputs();
   renderSummary();
 }
