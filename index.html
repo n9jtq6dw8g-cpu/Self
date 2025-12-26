@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Tracker</title>
 
-  <!-- App-like feel on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
@@ -19,7 +18,7 @@
   <button class="nav" data-tab="settings">Settings</button>
 </header>
 
-<!-- LOG (DEFAULT) -->
+<!-- LOG -->
 <section id="log" class="tab active">
   <div class="card">
     <h2>Log</h2>
@@ -31,17 +30,20 @@
 <!-- SUMMARY -->
 <section id="summary" class="tab">
   <div class="card hero">
-    <h2>Summary</h2>
-
-    <select id="summaryActivity"></select>
-
-    <div class="tabs">
-      <button class="range active" data-range="daily">Daily</button>
-      <button class="range" data-range="weekly">Weekly</button>
-      <button class="range" data-range="monthly">Monthly</button>
-      <button class="range" data-range="yearly">Yearly</button>
+    <div class="summary-header">
+      <h2>Summary</h2>
+      <div class="range-control">
+        <button id="rangeBtn">⏱</button>
+        <div id="rangeMenu" class="range-menu hidden">
+          <div data-range="daily">Daily</div>
+          <div data-range="weekly">Weekly</div>
+          <div data-range="monthly">Monthly</div>
+          <div data-range="yearly">Yearly</div>
+        </div>
+      </div>
     </div>
 
+    <select id="summaryActivity"></select>
     <canvas id="chart" height="260"></canvas>
   </div>
 
@@ -71,7 +73,6 @@
     <h2 id="activityFormTitle">Add Activity</h2>
 
     <input id="actName" placeholder="Activity name" />
-
     <select id="actUnit">
       <option value="count">Count</option>
       <option value="minutes">Minutes</option>
@@ -118,8 +119,6 @@
   <div class="card">
     <h2>Preferences</h2>
     <button onclick="toggleTheme()">Dark / Light</button>
-    <button onclick="downloadBackup()">Download Backup</button>
-    <input type="file" accept=".json" onchange="importBackup(event)" />
   </div>
 </section>
 
