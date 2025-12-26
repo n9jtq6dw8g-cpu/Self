@@ -1,7 +1,7 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  padding: 20px;
-  background: #f5f5f5;
+  background: #f2f2f7;
+  padding: 16px;
 }
 
 h1 {
@@ -10,38 +10,74 @@ h1 {
 
 .card {
   background: white;
-  padding: 15px;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
   margin-bottom: 10px;
-  border-radius: 8px;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  font-weight: 500;
-}
-
-input {
-  margin-top: 5px;
-  padding: 8px;
-  font-size: 16px;
 }
 
 button {
   width: 100%;
   padding: 12px;
-  font-size: 16px;
   background: #007aff;
   color: white;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
+  border-radius: 10px;
 }
 
-pre {
-  background: #111;
-  color: #0f0;
-  padding: 10px;
-  border-radius: 8px;
-  overflow-x: auto;
+.weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.weekdays label {
+  background: #e5e5ea;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.hidden {
+  display: none;
+}
+
+.activity-item {
+  margin-bottom: 8px;
+}
+
+.progress {
+  background: #e5e5ea;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress div {
+  height: 8px;
+  background: #34c759;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  flex: 1;
+  background: #e5e5ea;
+}
+
+.tab.active {
+  background: #007aff;
+  color: white;
+}
+
+.backup {
+  border-left: 4px solid #ff9f0a;
 }
