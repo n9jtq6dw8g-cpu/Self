@@ -4,18 +4,69 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Tracker</title>
+
+  <!-- App-like feel on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <header>
-  <button class="nav active" data-tab="settings">Settings</button>
-  <button class="nav" data-tab="log">Log</button>
+  <button class="nav active" data-tab="log">Log</button>
   <button class="nav" data-tab="summary">Summary</button>
+  <button class="nav" data-tab="settings">Settings</button>
 </header>
 
+<!-- LOG (DEFAULT) -->
+<section id="log" class="tab active">
+  <div class="card">
+    <h2>Log</h2>
+    <input type="date" id="logDate" />
+    <div id="logInputs"></div>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section id="summary" class="tab">
+  <div class="card hero">
+    <h2>Summary</h2>
+
+    <select id="summaryActivity"></select>
+
+    <div class="tabs">
+      <button class="range active" data-range="daily">Daily</button>
+      <button class="range" data-range="weekly">Weekly</button>
+      <button class="range" data-range="monthly">Monthly</button>
+      <button class="range" data-range="yearly">Yearly</button>
+    </div>
+
+    <canvas id="chart" height="260"></canvas>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="label">Total</div>
+      <div class="value" id="mTotal">–</div>
+    </div>
+    <div class="metric">
+      <div class="label">Average</div>
+      <div class="value" id="mAvg">–</div>
+    </div>
+    <div class="metric">
+      <div class="label">Best</div>
+      <div class="value" id="mBest">–</div>
+    </div>
+    <div class="metric">
+      <div class="label">Active Days</div>
+      <div class="value" id="mActive">–</div>
+    </div>
+  </div>
+</section>
+
 <!-- SETTINGS -->
-<section id="settings" class="tab active">
+<section id="settings" class="tab">
   <div class="card">
     <h2 id="activityFormTitle">Add Activity</h2>
 
@@ -30,14 +81,8 @@
     <input id="actGoal" type="number" placeholder="Daily goal" />
 
     <div class="time-row">
-      <div>
-        <label>Start</label>
-        <input id="actStart" type="time" />
-      </div>
-      <div>
-        <label>End</label>
-        <input id="actEnd" type="time" />
-      </div>
+      <input id="actStart" type="time" />
+      <input id="actEnd" type="time" />
     </div>
 
     <select id="actFreq" onchange="toggleWeekdays()">
@@ -72,37 +117,9 @@
 
   <div class="card">
     <h2>Preferences</h2>
-    <button onclick="toggleTheme()">Toggle Dark / Light</button>
+    <button onclick="toggleTheme()">Dark / Light</button>
     <button onclick="downloadBackup()">Download Backup</button>
     <input type="file" accept=".json" onchange="importBackup(event)" />
-  </div>
-</section>
-
-<!-- LOG -->
-<section id="log" class="tab">
-  <div class="card">
-    <h2>Log</h2>
-    <input type="date" id="logDate" />
-    <div id="logInputs"></div>
-  </div>
-</section>
-
-<!-- SUMMARY -->
-<section id="summary" class="tab">
-  <div class="card">
-    <h2>Summary</h2>
-
-    <select id="summaryActivity"></select>
-
-    <div class="tabs">
-      <button class="range active" data-range="daily">Daily</button>
-      <button class="range" data-range="weekly">Weekly</button>
-      <button class="range" data-range="monthly">Monthly</button>
-      <button class="range" data-range="yearly">Yearly</button>
-    </div>
-
-    <canvas id="chart" height="260"></canvas>
-    <div id="stats"></div>
   </div>
 </section>
 
