@@ -1,17 +1,17 @@
 :root {
-  --bg: #f6f7f9;
+  --bg: #f5f9f9;
   --card: #ffffff;
-  --text: #111;
-  --accent: #2563eb;
-  --border: #e5e7eb;
+  --text: #0f172a;
+  --muted: #6b7280;
+  --accent: #14b8a6; /* teal */
 }
 
 body.dark {
   --bg: #0f172a;
   --card: #111827;
   --text: #f9fafb;
-  --accent: #60a5fa;
-  --border: #1f2937;
+  --muted: #9ca3af;
+  --accent: #2dd4bf;
 }
 
 body {
@@ -25,20 +25,20 @@ header {
   display: flex;
   justify-content: space-around;
   background: var(--card);
-  border-bottom: 1px solid var(--border);
 }
 
 .nav {
+  flex: 1;
   padding: 14px;
   background: none;
   border: none;
   font-size: 15px;
-  color: var(--text);
+  color: var(--muted);
 }
 
 .nav.active {
+  color: var(--accent);
   font-weight: 600;
-  border-bottom: 2px solid var(--accent);
 }
 
 .tab {
@@ -52,18 +52,21 @@ header {
 
 .card {
   background: var(--card);
+  border-radius: 18px;
   padding: 18px;
-  border-radius: 16px;
   margin-bottom: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.card.hero {
+  padding-bottom: 8px;
 }
 
 input, select, button {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   margin-top: 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+  border-radius: 14px;
+  border: none;
   background: var(--bg);
   color: var(--text);
   font-size: 15px;
@@ -72,39 +75,55 @@ input, select, button {
 button {
   background: var(--accent);
   color: white;
-  border: none;
-}
-
-.weekdays {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .time-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+}
+
+.weekdays {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hidden {
+  display: none;
 }
 
 .activity {
   padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.activity button {
-  margin-top: 6px;
 }
 
 .paused {
   opacity: 0.5;
 }
 
-canvas {
-  margin-top: 10px;
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-#stats {
-  margin-top: 12px;
-  font-size: 14px;
-  line-height: 1.6;
+.metric {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: center;
+}
+
+.metric .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.metric .value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+canvas {
+  margin-top: 10px;
 }
