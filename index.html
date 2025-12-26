@@ -17,9 +17,10 @@
 <!-- SETTINGS -->
 <section id="settings" class="tab active">
   <div class="card">
-    <h2>Add Activity</h2>
+    <h2 id="activityFormTitle">Add Activity</h2>
 
     <input id="actName" placeholder="Activity name" />
+
     <select id="actUnit">
       <option value="count">Count</option>
       <option value="minutes">Minutes</option>
@@ -28,11 +29,16 @@
 
     <input id="actGoal" type="number" placeholder="Daily goal" />
 
-    <label>Start time</label>
-    <input id="actStart" type="time" />
-
-    <label>End time</label>
-    <input id="actEnd" type="time" />
+    <div class="time-row">
+      <div>
+        <label>Start</label>
+        <input id="actStart" type="time" />
+      </div>
+      <div>
+        <label>End</label>
+        <input id="actEnd" type="time" />
+      </div>
+    </div>
 
     <select id="actFreq" onchange="toggleWeekdays()">
       <option value="daily">Daily</option>
@@ -56,7 +62,7 @@
       <option value="6">6 Months</option>
     </select>
 
-    <button onclick="saveActivity()">Save Activity</button>
+    <button id="saveActivityBtn" onclick="saveActivity()">Save Activity</button>
   </div>
 
   <div class="card">
@@ -75,7 +81,7 @@
 <!-- LOG -->
 <section id="log" class="tab">
   <div class="card">
-    <h2>Log Activity</h2>
+    <h2>Log</h2>
     <input type="date" id="logDate" />
     <div id="logInputs"></div>
   </div>
@@ -95,7 +101,7 @@
       <button class="range" data-range="yearly">Yearly</button>
     </div>
 
-    <canvas id="chart" height="220"></canvas>
+    <canvas id="chart" height="260"></canvas>
     <div id="stats"></div>
   </div>
 </section>
