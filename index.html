@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Health Tracker</title>
+  <title>Personal Health Tracker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <h1>Health Tracker</h1>
 
-<!-- ADD / EDIT ACTIVITY -->
 <section class="card">
-  <h2 id="formTitle">Add Activity</h2>
+  <h2>Add Activity</h2>
 
   <input id="actName" placeholder="Activity name" />
   <select id="actUnit">
@@ -22,7 +21,7 @@
   </select>
 
   <input id="actGoal" type="number" placeholder="Daily goal" />
-  <input id="actSets" type="number" placeholder="Sets" />
+  <input id="actSets" type="number" placeholder="Sets (optional)" />
   <input id="actTime" type="time" />
 
   <select id="actFreq" onchange="toggleWeekdays()">
@@ -41,43 +40,45 @@
     <label><input type="checkbox" value="SU">Sun</label>
   </div>
 
+  <select id="actDuration">
+    <option value="1">1 Month</option>
+    <option value="3" selected>3 Months</option>
+    <option value="6">6 Months</option>
+  </select>
+
   <button onclick="saveActivity()">Save Activity</button>
 </section>
 
-<!-- ACTIVITIES -->
 <section class="card">
   <h2>Activities</h2>
   <div id="activityList"></div>
 </section>
 
-<!-- DAILY LOG -->
 <section class="card">
   <h2>Today</h2>
   <form id="logForm"></form>
   <button onclick="saveLog()">Save Today</button>
 </section>
 
-<!-- SUMMARY -->
 <section class="card">
   <h2>Summary</h2>
+
+  <select id="summaryActivity" onchange="renderSummary()"></select>
+
   <div class="tabs">
     <button class="tab active" data-range="daily">Daily</button>
     <button class="tab" data-range="weekly">Weekly</button>
     <button class="tab" data-range="monthly">Monthly</button>
     <button class="tab" data-range="yearly">Yearly</button>
   </div>
-  <div id="summary"></div>
+
+  <canvas id="chart" height="200"></canvas>
+
+  <div id="stats"></div>
 </section>
 
-<!-- CALENDAR -->
 <section class="card">
-  <h2>Calendar</h2>
-  <button onclick="generateCalendar()">Generate Apple Calendar</button>
-</section>
-
-<!-- BACKUP -->
-<section class="card backup">
-  <p id="backupStatus"></p>
+  <h2>Backup</h2>
   <button onclick="downloadBackup()">Download Backup</button>
   <input type="file" accept=".json" onchange="importBackup(event)" />
 </section>
