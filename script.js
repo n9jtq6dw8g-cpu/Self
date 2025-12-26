@@ -2,8 +2,11 @@ const ACT_KEY = "activities";
 const LOG_KEY = "logs";
 const THEME_KEY = "theme";
 
+let editId = null;
 let currentRange = "daily";
 const ranges = { daily: 14, weekly: 56, monthly: 180, yearly: 730 };
+
+const chart = document.getElementById("chart");
 
 function today() {
   return new Date().toISOString().split("T")[0];
@@ -17,7 +20,7 @@ function save(k, v) {
   localStorage.setItem(k, JSON.stringify(v));
 }
 
-/* ---------- NAV ---------- */
+/* NAV */
 document.querySelectorAll(".nav").forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll(".nav, .tab").forEach(e => e.classList.remove("active"));
@@ -26,21 +29,25 @@ document.querySelectorAll(".nav").forEach(btn => {
   };
 });
 
-/* ---------- THEME ---------- */
+/* THEME */
 function toggleTheme() {
   document.body.classList.toggle("dark");
   localStorage.setItem(THEME_KEY, document.body.classList.contains("dark"));
 }
 if (localStorage.getItem(THEME_KEY) === "true") document.body.classList.add("dark");
 
-/* ---------- ACTIVITY ---------- */
+/* ACTIVITY */
 function toggleWeekdays() {
   weekdays.classList.toggle("hidden", actFreq.value !== "custom");
 }
 
 function saveActivity() {
+  if (!actName.value) return alert("Activity name required");
+  if (!actStart.value || !actEnd.value || actStart.value >= actEnd.value)
+    return alert("Invalid time range");
+
   const acts = load(ACT_KEY);
-  const id = actName.value.toLowerCase().replace(/\s+/g, "_");
+  const id = editId || actName.value.toLowerCase().replace(/\s+/g, "_");
 
   acts[id] = {
     id,
@@ -53,20 +60,44 @@ function saveActivity() {
     frequency: actFreq.value,
     days: [...document.querySelectorAll("#weekdays input:checked")].map(i => i.value),
     calendar: {
-      startDate: today(),
+      startDate: acts[id]?.calendar?.startDate || today(),
       endDate: addMonths(today(), Number(actDuration.value))
     },
-    active: true,
+    active: acts[id]?.active ?? true,
     streak: 0,
     bestStreak: acts[id]?.bestStreak || 0
   };
 
   save(ACT_KEY, acts);
-  clearActivityForm();
+  resetActivityForm();
   renderAll();
 }
 
-function clearActivityForm() {
+function editActivity(id) {
+  const a = load(ACT_KEY)[id];
+  editId = id;
+  activityFormTitle.textContent = "Edit Activity";
+  saveActivityBtn.textContent = "Update Activity";
+
+  actName.value = a.name;
+  actUnit.value = a.unit;
+  actGoal.value = a.goal;
+  actStart.value = a.startTime;
+  actEnd.value = a.endTime;
+  actFreq.value = a.frequency;
+  actDuration.value = "3";
+
+  document.querySelectorAll("#weekdays input").forEach(cb => {
+    cb.checked = a.days.includes(cb.value);
+  });
+  toggleWeekdays();
+}
+
+function resetActivityForm() {
+  editId = null;
+  activityFormTitle.textContent = "Add Activity";
+  saveActivityBtn.textContent = "Save Activity";
+
   actName.value = "";
   actGoal.value = "";
   actStart.value = "";
@@ -91,9 +122,10 @@ function renderActivities() {
 
   Object.values(acts).forEach(a => {
     activityList.innerHTML += `
-      <div class="${a.active ? "" : "paused"}">
+      <div class="activity ${a.active ? "" : "paused"}">
         <strong>${a.name}</strong><br/>
         ${a.startTime}–${a.endTime}<br/>
+        <button onclick="editActivity('${a.id}')">Edit</button>
         <button onclick="exportCalendar('${a.id}')" ${!a.active ? "disabled" : ""}>
           Export Calendar
         </button>
@@ -109,7 +141,7 @@ function renderActivities() {
     .join("");
 }
 
-/* ---------- LOGGING ---------- */
+/* LOG */
 logDate.value = today();
 
 function renderLogInputs() {
@@ -121,16 +153,16 @@ function renderLogInputs() {
 
     logInputs.innerHTML += `
       <label>${a.name}</label>
-      <input type="number" placeholder="Enter value" />
-      <button onclick="addSet('${a.id}', this)">Add Set</button>
+      <input type="number" id="input-${a.id}" placeholder="Enter value" />
+      <button onclick="addSet('${a.id}')">Add Set</button>
       <div id="sets-${a.id}"></div>
     `;
     renderSets(a.id, logDate.value);
   });
 }
 
-function addSet(id, btn) {
-  const input = btn.previousElementSibling;
+function addSet(id) {
+  const input = document.getElementById(`input-${id}`);
   const val = Number(input.value);
   if (!val) return;
 
@@ -145,25 +177,7 @@ function addSet(id, btn) {
   renderSets(id, d);
 }
 
-function renderSets(id, d) {
-  const container = document.getElementById(`sets-${id}`);
-  const sets = load(LOG_KEY)[d]?.[id] || [];
-  container.innerHTML = sets
-    .map((v, i) => `<span class="set" onclick="editSet('${id}','${d}',${i})">${v}</span>`)
-    .join("");
-}
-
-function editSet(id, d, i) {
-  const logs = load(LOG_KEY);
-  const val = prompt("Edit value or leave empty to delete", logs[d][id][i]);
-  if (val === null) return;
-  if (val === "") logs[d][id].splice(i, 1);
-  else logs[d][id][i] = Number(val);
-  save(LOG_KEY, logs);
-  renderSets(id, d);
-}
-
-/* ---------- SUMMARY ---------- */
+/* SUMMARY GRAPH */
 document.querySelectorAll(".range").forEach(b => {
   b.onclick = () => {
     document.querySelectorAll(".range").forEach(x => x.classList.remove("active"));
@@ -179,7 +193,6 @@ function renderSummary() {
 
   const logs = load(LOG_KEY);
   const data = [];
-
   for (let i = ranges[currentRange] - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
@@ -187,42 +200,51 @@ function renderSummary() {
     const sets = logs[key]?.[id] || [];
     data.push(sets.reduce((a, b) => a + b, 0));
   }
-
-  drawGraph(data);
-  renderStats(data);
+  drawGraph(data, load(ACT_KEY)[id].unit);
 }
 
-function drawGraph(data) {
+function drawGraph(data, unit) {
   const ctx = chart.getContext("2d");
   ctx.clearRect(0, 0, chart.width, chart.height);
+
   const max = Math.max(...data, 1);
+  const padding = 40;
+  const w = chart.width - padding * 2;
+  const h = chart.height - padding * 2;
+
+  ctx.strokeStyle = "#e5e7eb";
+  ctx.fillStyle = "#6b7280";
+  ctx.font = "12px sans-serif";
+
+  for (let i = 0; i <= 4; i++) {
+    const y = padding + (h / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(chart.width - padding, y);
+    ctx.stroke();
+    ctx.fillText(Math.round(max - (max / 4) * i), 5, y + 4);
+  }
+
   ctx.beginPath();
   data.forEach((v, i) => {
-    const x = (i / (data.length - 1)) * chart.width;
-    const y = chart.height - (v / max) * chart.height;
+    const x = padding + (i / (data.length - 1)) * w;
+    const y = padding + h - (v / max) * h;
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
+
   ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--accent");
+  ctx.lineWidth = 2;
   ctx.stroke();
+
+  ctx.fillText(unit, chart.width - 30, padding - 10);
 }
 
-function renderStats(data) {
-  const total = data.reduce((a, b) => a + b, 0);
-  const active = data.filter(v => v > 0).length;
-  const avg = active ? (total / active).toFixed(1) : 0;
-  stats.innerHTML = `
-    Total: ${total}<br/>
-    Daily Avg: ${avg}<br/>
-    Active Days: ${active}
-  `;
-}
-
-/* ---------- CALENDAR ---------- */
+/* CALENDAR */
 function exportCalendar(id) {
   const a = load(ACT_KEY)[id];
   if (!a.active) return;
 
-  const until = a.calendar.endDate.replace(/-/g,"");
+  const until = a.calendar.endDate.replace(/-/g, "");
   const rrule =
     a.frequency === "alternate"
       ? "FREQ=DAILY;INTERVAL=2"
@@ -232,6 +254,7 @@ function exportCalendar(id) {
 
   const ics = `
 BEGIN:VCALENDAR
+VERSION:2.0
 BEGIN:VEVENT
 UID:${a.uid}
 SUMMARY:${a.name}
@@ -242,37 +265,20 @@ END:VEVENT
 END:VCALENDAR
 `;
 
-  const blob = new Blob([ics.trim()], { type: "text/calendar" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `${a.name}.ics`;
-  link.click();
+  const blob = new Blob([ics.trim()], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const aEl = document.createElement("a");
+  aEl.href = url;
+  aEl.download = `${a.name}-${Date.now()}.ics`;
+  document.body.appendChild(aEl);
+  aEl.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    aEl.remove();
+  }, 500);
 }
 
-/* ---------- BACKUP ---------- */
-function downloadBackup() {
-  const blob = new Blob(
-    [JSON.stringify({ activities: load(ACT_KEY), logs: load(LOG_KEY) }, null, 2)],
-    { type: "application/json" }
-  );
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `backup-${today()}.json`;
-  a.click();
-}
-
-function importBackup(e) {
-  const r = new FileReader();
-  r.onload = () => {
-    const d = JSON.parse(r.result);
-    save(ACT_KEY, d.activities || {});
-    save(LOG_KEY, d.logs || {});
-    renderAll();
-  };
-  r.readAsText(e.target.files[0]);
-}
-
-/* ---------- UTILS ---------- */
+/* UTILS */
 function addMonths(date, m) {
   const d = new Date(date);
   d.setMonth(d.getMonth() + m);
