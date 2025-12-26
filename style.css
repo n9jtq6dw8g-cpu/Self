@@ -3,7 +3,8 @@
   --card: #ffffff;
   --text: #0f172a;
   --muted: #6b7280;
-  --accent: #14b8a6; /* teal */
+  --accent: #14b8a6;
+  --grid: rgba(0,0,0,0.06);
 }
 
 body.dark {
@@ -12,6 +13,7 @@ body.dark {
   --text: #f9fafb;
   --muted: #9ca3af;
   --accent: #2dd4bf;
+  --grid: rgba(255,255,255,0.08);
 }
 
 body {
@@ -61,6 +63,47 @@ header {
   padding-bottom: 8px;
 }
 
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.range-control {
+  position: relative;
+}
+
+#rangeBtn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.range-menu {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+.range-menu div {
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.range-menu div:hover {
+  background: var(--bg);
+}
+
+.hidden {
+  display: none;
+}
+
 input, select, button {
   width: 100%;
   padding: 14px;
@@ -69,7 +112,6 @@ input, select, button {
   border: none;
   background: var(--bg);
   color: var(--text);
-  font-size: 15px;
 }
 
 button {
@@ -86,18 +128,6 @@ button {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.hidden {
-  display: none;
-}
-
-.activity {
-  padding: 10px 0;
-}
-
-.paused {
-  opacity: 0.5;
 }
 
 .metrics {
@@ -125,5 +155,5 @@ button {
 }
 
 canvas {
-  margin-top: 10px;
+  margin-top: 12px;
 }
