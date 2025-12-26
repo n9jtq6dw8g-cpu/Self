@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Daily Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <h1>Daily Habit Tracker</h1>
+
+  <form id="habitForm">
+    <div class="card">
+      <label>
+        Skipping (count):
+        <input type="number" id="skipping" placeholder="e.g. 200" />
+      </label>
+    </div>
+
+    <div class="card">
+      <label>
+        Water intake (ml):
+        <input type="number" id="water" placeholder="e.g. 1600" />
+      </label>
+    </div>
+
+    <div class="card">
+      <label>
+        Stretching (minutes):
+        <input type="number" id="stretching" placeholder="e.g. 15" />
+      </label>
+    </div>
+
+    <button type="submit">Save Today</button>
+  </form>
+
+  <h2>Today’s Log</h2>
+  <pre id="output"></pre>
+
+  <script src="script.js"></script>
+</body>
+</html>
