@@ -42,26 +42,39 @@ function saveActivity() {
   const acts = load(ACT_KEY);
   const id = actName.value.toLowerCase().replace(/\s+/g, "_");
 
-  const days = [...document.querySelectorAll("#weekdays input:checked")].map(i => i.value);
-  const startDate = today();
-  const endDate = addMonths(startDate, Number(actDuration.value));
-
   acts[id] = {
+    id,
+    uid: acts[id]?.uid || crypto.randomUUID(),
     name: actName.value,
     unit: actUnit.value,
     goal: Number(actGoal.value),
     startTime: actStart.value,
     endTime: actEnd.value,
     frequency: actFreq.value,
-    days,
-    calendar: { startDate, endDate },
+    days: [...document.querySelectorAll("#weekdays input:checked")].map(i => i.value),
+    calendar: {
+      startDate: today(),
+      endDate: addMonths(today(), Number(actDuration.value))
+    },
     active: true,
     streak: 0,
     bestStreak: acts[id]?.bestStreak || 0
   };
 
   save(ACT_KEY, acts);
+  clearActivityForm();
   renderAll();
+}
+
+function clearActivityForm() {
+  actName.value = "";
+  actGoal.value = "";
+  actStart.value = "";
+  actEnd.value = "";
+  actFreq.value = "daily";
+  actDuration.value = "3";
+  document.querySelectorAll("#weekdays input").forEach(i => i.checked = false);
+  toggleWeekdays();
 }
 
 function togglePause(id) {
@@ -76,23 +89,23 @@ function renderActivities() {
   const acts = load(ACT_KEY);
   activityList.innerHTML = "";
 
-  Object.entries(acts).forEach(([id, a]) => {
+  Object.values(acts).forEach(a => {
     activityList.innerHTML += `
       <div class="${a.active ? "" : "paused"}">
         <strong>${a.name}</strong><br/>
         ${a.startTime}–${a.endTime}<br/>
-        <button onclick="exportCalendar('${id}')" ${!a.active ? "disabled" : ""}>
+        <button onclick="exportCalendar('${a.id}')" ${!a.active ? "disabled" : ""}>
           Export Calendar
         </button>
-        <button onclick="togglePause('${id}')">
+        <button onclick="togglePause('${a.id}')">
           ${a.active ? "Pause" : "Resume"}
         </button>
       </div>
     `;
   });
 
-  summaryActivity.innerHTML = Object.entries(acts)
-    .map(([id, a]) => `<option value="${id}">${a.name}</option>`)
+  summaryActivity.innerHTML = Object.values(acts)
+    .map(a => `<option value="${a.id}">${a.name}</option>`)
     .join("");
 }
 
@@ -103,21 +116,22 @@ function renderLogInputs() {
   const acts = load(ACT_KEY);
   logInputs.innerHTML = "";
 
-  Object.entries(acts).forEach(([id, a]) => {
+  Object.values(acts).forEach(a => {
     if (!a.active) return;
 
     logInputs.innerHTML += `
       <label>${a.name}</label>
-      <input type="number" onkeydown="addSet(event,'${id}')" />
-      <div id="sets-${id}"></div>
+      <input type="number" placeholder="Enter value" />
+      <button onclick="addSet('${a.id}', this)">Add Set</button>
+      <div id="sets-${a.id}"></div>
     `;
-    renderSets(id, logDate.value);
+    renderSets(a.id, logDate.value);
   });
 }
 
-function addSet(e, id) {
-  if (e.key !== "Enter") return;
-  const val = Number(e.target.value);
+function addSet(id, btn) {
+  const input = btn.previousElementSibling;
+  const val = Number(input.value);
   if (!val) return;
 
   const logs = load(LOG_KEY);
@@ -127,15 +141,13 @@ function addSet(e, id) {
   logs[d][id].push(val);
 
   save(LOG_KEY, logs);
-  e.target.value = "";
+  input.value = "";
   renderSets(id, d);
 }
 
 function renderSets(id, d) {
-  const sets = load(LOG_KEY)[d]?.[id] || [];
   const container = document.getElementById(`sets-${id}`);
-  if (!container) return;
-
+  const sets = load(LOG_KEY)[d]?.[id] || [];
   container.innerHTML = sets
     .map((v, i) => `<span class="set" onclick="editSet('${id}','${d}',${i})">${v}</span>`)
     .join("");
@@ -145,10 +157,8 @@ function editSet(id, d, i) {
   const logs = load(LOG_KEY);
   const val = prompt("Edit value or leave empty to delete", logs[d][id][i]);
   if (val === null) return;
-
   if (val === "") logs[d][id].splice(i, 1);
   else logs[d][id][i] = Number(val);
-
   save(LOG_KEY, logs);
   renderSets(id, d);
 }
@@ -169,9 +179,8 @@ function renderSummary() {
 
   const logs = load(LOG_KEY);
   const data = [];
-  const days = ranges[currentRange];
 
-  for (let i = days - 1; i >= 0; i--) {
+  for (let i = ranges[currentRange] - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const key = d.toISOString().split("T")[0];
@@ -186,7 +195,6 @@ function renderSummary() {
 function drawGraph(data) {
   const ctx = chart.getContext("2d");
   ctx.clearRect(0, 0, chart.width, chart.height);
-
   const max = Math.max(...data, 1);
   ctx.beginPath();
   data.forEach((v, i) => {
@@ -202,12 +210,9 @@ function renderStats(data) {
   const total = data.reduce((a, b) => a + b, 0);
   const active = data.filter(v => v > 0).length;
   const avg = active ? (total / active).toFixed(1) : 0;
-  const best = Math.max(...data);
-
   stats.innerHTML = `
     Total: ${total}<br/>
     Daily Avg: ${avg}<br/>
-    Best Day: ${best}<br/>
     Active Days: ${active}
   `;
 }
@@ -228,6 +233,7 @@ function exportCalendar(id) {
   const ics = `
 BEGIN:VCALENDAR
 BEGIN:VEVENT
+UID:${a.uid}
 SUMMARY:${a.name}
 DTSTART:${a.calendar.startDate.replace(/-/g,"")}T${a.startTime.replace(":","")}00
 DTEND:${a.calendar.startDate.replace(/-/g,"")}T${a.endTime.replace(":","")}00
