@@ -179,7 +179,7 @@ function renderHistory(){
   Object.keys(l).sort().reverse().forEach(d=>{
     const day=document.createElement("div");
     day.className="history-day";
-    day.innerHTML=`<strong>${d}</strong>`;
+    day.innerHTML=`<strong>${formatHistoryDate(d)}</strong>`;
     Object.keys(l[d]).forEach(id=>{
       l[d][id].forEach(v=>{
         const s=document.createElement("div");
@@ -228,16 +228,28 @@ function renderSummary(){
   document.getElementById("sStreak").textContent=days.length;
 
   ctx.clearRect(0,0,320,180);
-  if(!days.length) return;
-  const max=Math.max(...days,1);
-  ctx.strokeStyle="#F57F5B";
+  if(!data.length) return;
+
+  const max=Math.max(...data,1);
+
   ctx.beginPath();
-  days.forEach((v,i)=>{
-    const x=i*(320/(days.length-1||1));
-    const y=180-(v/max)*160;
+  data.forEach((v,i)=>{
+    const x=i*(320/(data.length-1||1));
+    const y=180-(v/max)*150-10;
     i?ctx.lineTo(x,y):ctx.moveTo(x,y);
   });
+
+  // Stroke
+  ctx.strokeStyle="#F57F5B";
+  ctx.lineWidth=2;
   ctx.stroke();
+
+  // Fill
+  ctx.lineTo(320,180);
+  ctx.lineTo(0,180);
+  ctx.closePath();
+  ctx.fillStyle="rgba(245,127,91,0.2)";
+  ctx.fill();
 }
 
 function exportCalendar(a){
@@ -292,6 +304,23 @@ function resetActivityForm(){
   weekdays.classList.add("hidden");
   weekdays.querySelectorAll("input").forEach(i=>i.checked=false);
   document.getElementById("cancelEdit").classList.add("hidden");
+}
+
+function formatHistoryDate(d){
+  const date=new Date(d);
+  const today=new Date();
+  today.setHours(0,0,0,0);
+
+  const diff=(today - date)/(1000*60*60*24);
+
+  if(diff===0) return "Today";
+  if(diff===1) return "Yesterday";
+
+  return date.toLocaleDateString(undefined,{
+    day:"numeric",
+    month:"short",
+    year:"numeric"
+  });
 }
 
 /* INIT */
