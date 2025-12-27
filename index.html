@@ -2,116 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Personal Health Tracker</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app">
 
-    <!-- LOG -->
-    <section id="screen-log" class="screen active">
-      <h1>Log</h1>
+<header>
+  <h1>Tracker</h1>
+</header>
 
-      <div class="card">
-        <select id="logActivity"></select>
-        <input type="date" id="logDate" />
-        <div id="logInputs"></div>
-      </div>
+<main>
 
-      <h3>History</h3>
-      <div id="logHistory"></div>
-    </section>
+  <!-- LOG -->
+  <section id="screen-log" class="screen active">
+    <h2>Log</h2>
 
-    <!-- SUMMARY -->
-    <section id="screen-summary" class="screen">
-      <h1>Summary</h1>
+    <label>Date</label>
+    <input type="date" id="logDate">
 
-      <div class="card row">
-        <select id="summaryActivity"></select>
-        <select id="summaryRange">
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-          <option value="all">All Time</option>
-        </select>
-      </div>
+    <label>Activity</label>
+    <select id="logActivity"></select>
 
-      <div class="card">
-        <canvas id="summaryGraph" width="320" height="180"></canvas>
-      </div>
+    <div id="logInputs"></div>
 
-      <div class="summary">
-        <div class="metric"><small>Total</small><span id="sTotal">0</span></div>
-        <div class="metric"><small>Average</small><span id="sAvg">0</span></div>
-        <div class="metric"><small>Best Day</small><span id="sBest">0</span></div>
-        <div class="metric"><small>Best Set</small><span id="sBestSet">0</span></div>
-        <div class="metric"><small>Active Days</small><span id="sActive">0</span></div>
-        <div class="metric"><small>Streak</small><span id="sStreak">0</span></div>
-      </div>
-    </section>
+    <h3>History</h3>
+    <div id="logHistory"></div>
+  </section>
 
-    <!-- PROFILE -->
-    <section id="screen-profile" class="screen">
-      <h1>Profile</h1>
+  <!-- SUMMARY -->
+  <section id="screen-summary" class="screen">
+    <h2>Summary</h2>
 
-      <div class="card">
-        <h3>Appearance</h3>
-        <button id="toggleTheme" class="secondary">Toggle Dark Mode</button>
-      </div>
+    <div class="row">
+      <select id="summaryActivity"></select>
+      <select id="summaryRange">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+        <option value="all">All Time</option>
+      </select>
+    </div>
 
-      <h3>Activities</h3>
-      <div id="activityList"></div>
+    <canvas id="summaryGraph" width="320" height="180"></canvas>
 
-      <h3>Add / Edit Activity</h3>
-      <div class="card">
-        <small id="editLabel"></small>
-        <input id="actName" placeholder="Activity name" />
-        <select id="actUnit">
-          <option value="count">Count</option>
-          <option value="ml">ML</option>
-          <option value="minutes">Minutes</option>
-        </select>
-        <div class="row">
-          <input type="time" id="actStart" />
-          <input type="time" id="actEnd" />
-        </div>
-        <select id="actFreq">
-          <option value="daily">Daily</option>
-          <option value="alternate">Alternate Days</option>
-          <option value="custom">Custom Days</option>
-        </select>
+    <div class="metrics">
+      <div>Total <span id="sTotal">0</span></div>
+      <div>Average <span id="sAvg">0</span></div>
+      <div>Best Day <span id="sBest">0</span></div>
+      <div>Best Set <span id="sBestSet">0</span></div>
+      <div>Active Days <span id="sActive">0</span></div>
+      <div>Streak <span id="sStreak">0</span></div>
+    </div>
+  </section>
 
-        <div id="weekdays" class="hidden row">
-          <label><input type="checkbox" value="Mon" />Mon</label>
-          <label><input type="checkbox" value="Tue" />Tue</label>
-          <label><input type="checkbox" value="Wed" />Wed</label>
-          <label><input type="checkbox" value="Thu" />Thu</label>
-          <label><input type="checkbox" value="Fri" />Fri</label>
-          <label><input type="checkbox" value="Sat" />Sat</label>
-          <label><input type="checkbox" value="Sun" />Sun</label>
-        </div>
+  <!-- PROFILE -->
+  <section id="screen-profile" class="screen">
+    <h2>Activities</h2>
 
-        <button id="saveActivity">Save Activity</button>
-        <button id="cancelEdit" class="secondary hidden">Cancel</button>
-      </div>
+    <div id="editLabel" class="hint"></div>
 
-      <h3>Backup</h3>
-      <div class="card">
-        <button id="exportData">Export Backup</button>
-        <input type="file" id="importData" />
-      </div>
-    </section>
-  </div>
+    <input id="actName" placeholder="Activity name">
+    <input id="actUnit" placeholder="Unit (reps, ml, min)">
+    <input type="time" id="actStart">
+    <input type="time" id="actEnd">
 
-  <!-- Bottom Nav -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-target="log">📝</button>
-    <button class="nav-btn" data-target="summary">📊</button>
-    <button class="nav-btn" data-target="profile">👤</button>
-  </nav>
+    <select id="actFreq">
+      <option value="daily">Daily</option>
+      <option value="alternate">Alternate days</option>
+      <option value="custom">Custom days</option>
+    </select>
 
-  <script src="script.js"></script>
+    <div id="weekdays" class="hidden">
+      <label><input type="checkbox" value="Mon">Mon</label>
+      <label><input type="checkbox" value="Tue">Tue</label>
+      <label><input type="checkbox" value="Wed">Wed</label>
+      <label><input type="checkbox" value="Thu">Thu</label>
+      <label><input type="checkbox" value="Fri">Fri</label>
+      <label><input type="checkbox" value="Sat">Sat</label>
+      <label><input type="checkbox" value="Sun">Sun</label>
+    </div>
+
+    <button id="saveActivity">Save Activity</button>
+    <button id="cancelEdit" class="secondary hidden">Cancel</button>
+
+    <h3>Your Activities</h3>
+    <div id="activityList"></div>
+
+    <hr>
+
+    <button id="toggleTheme">Toggle Dark Mode</button>
+  </section>
+
+</main>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-target="log">📝</button>
+  <button class="nav-btn" data-target="summary">📊</button>
+  <button class="nav-btn" data-target="profile">👤</button>
+</nav>
+
+<script src="script.js"></script>
 </body>
 </html>
