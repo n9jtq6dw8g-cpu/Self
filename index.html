@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Personal Health Tracker</title>
+  <title>Personal Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,11 +18,14 @@
   <section id="screen-log" class="screen active">
     <h2>Log</h2>
 
+    <label>Date</label>
     <input type="date" id="logDate">
 
+    <label>Activity</label>
     <select id="logActivity"></select>
 
-    <div id="logInputs"></div>
+    <div id="logEntry"></div>
+
     <h3>History</h3>
     <div id="logHistory"></div>
   </section>
@@ -58,10 +61,16 @@
   <section id="screen-profile" class="screen">
     <h2>Activities</h2>
 
-    <div id="editLabel" class="hint"></div>
+    <div id="editHint"></div>
 
     <input id="actName" placeholder="Activity name">
-    <input id="actUnit" placeholder="Unit (reps, ml, min)">
+
+    <select id="actUnit">
+      <option value="count">Count</option>
+      <option value="ml">ml</option>
+      <option value="minutes">minutes</option>
+    </select>
+
     <input type="time" id="actStart">
     <input type="time" id="actEnd">
 
