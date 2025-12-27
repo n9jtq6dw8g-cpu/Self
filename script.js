@@ -25,6 +25,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const today = () => new Date().toISOString().split("T")[0];
 
+  /* ================= ICON SYSTEM ================= */
+  const ICON_MAP = {
+    skip: "🪢",
+    rope: "🪢",
+    water: "💧",
+    run: "👟",
+    walk: "🚶",
+    push: "💪",
+    pull: "🧗",
+    stretch: "🧘",
+    yoga: "🧘",
+    cycle: "🚴"
+  };
+
+  function getIcon(name) {
+    const n = name.toLowerCase();
+    for (let k in ICON_MAP) {
+      if (n.includes(k)) return ICON_MAP[k];
+    }
+    return "⬤"; // fallback
+  }
+
   /* ================= ACTIVITY (PROFILE) ================= */
   let editId = null;
 
@@ -89,8 +111,13 @@ document.addEventListener("DOMContentLoaded", () => {
       .filter(a => !a.archived)
       .forEach(a => {
         const div = document.createElement("div");
+        div.className = "card";
+
         div.innerHTML = `
-          <strong>${a.name}</strong> ${a.active ? "" : "(Paused)"}<br>
+          <strong>
+            <span class="activity-icon">${getIcon(a.name)}</span>
+            ${a.name}
+          </strong> ${a.active ? "" : "(Paused)"}<br><br>
           <button>Edit</button>
           <button>${a.active ? "Pause" : "Resume"}</button>
           <button>Archive</button>
@@ -193,10 +220,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!logs[date][id]) return;
 
       const day = document.createElement("div");
+      day.className = "card";
       day.innerHTML = `<strong>${date}</strong>`;
 
       logs[date][id].forEach((val, idx) => {
         const row = document.createElement("div");
+        row.className = "log-item";
         row.innerHTML = `
           <input type="number" value="${val}">
           <button>Save</button>
@@ -332,6 +361,12 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     r.readAsText(file);
   };
+
+  /* ================= DARK MODE ================= */
+  const themeBtn = document.getElementById("toggleTheme");
+  if (themeBtn) {
+    themeBtn.onclick = () => document.body.classList.toggle("dark");
+  }
 
   function renderAll() {
     renderActivities();
