@@ -1,109 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Health Tracker</title>
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V9 Core</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- LOG -->
-<section id="log" class="tab active">
-  <div class="card">
-    <h2>Log</h2>
-    <input type="date" id="logDate" />
-    <div id="logInputs"></div>
+<h1>Health Tracker (Core)</h1>
+
+<section>
+  <h2>Add / Edit Activity</h2>
+
+  <input id="actName" placeholder="Activity name">
+  <select id="actUnit">
+    <option value="count">Count</option>
+    <option value="minutes">Minutes</option>
+    <option value="ml">ml</option>
+  </select>
+
+  <div class="row">
+    <input id="actStart" type="time">
+    <input id="actEnd" type="time">
   </div>
+
+  <select id="actFreq">
+    <option value="daily">Daily</option>
+    <option value="alternate">Alternate days</option>
+    <option value="custom">Custom days</option>
+  </select>
+
+  <div id="weekdays" class="hidden">
+    <label><input type="checkbox" value="MO">Mon</label>
+    <label><input type="checkbox" value="TU">Tue</label>
+    <label><input type="checkbox" value="WE">Wed</label>
+    <label><input type="checkbox" value="TH">Thu</label>
+    <label><input type="checkbox" value="FR">Fri</label>
+    <label><input type="checkbox" value="SA">Sat</label>
+    <label><input type="checkbox" value="SU">Sun</label>
+  </div>
+
+  <button id="saveActivity">Save Activity</button>
 </section>
 
-<!-- SUMMARY -->
-<section id="summary" class="tab">
-  <div class="card hero">
-    <div class="summary-header">
-      <h2>Summary</h2>
-      <div class="range-control">
-        <button id="rangeBtn">⏱</button>
-        <div id="rangeMenu" class="range-menu hidden">
-          <div data-range="daily">Daily</div>
-          <div data-range="weekly">Weekly</div>
-          <div data-range="monthly">Monthly</div>
-          <div data-range="yearly">Yearly</div>
-        </div>
-      </div>
-    </div>
-
-    <select id="summaryActivity"></select>
-    <canvas id="chart" height="260"></canvas>
-  </div>
-
-  <div class="metrics">
-    <div class="metric"><div class="label">Total</div><div class="value" id="mTotal">–</div></div>
-    <div class="metric"><div class="label">Average</div><div class="value" id="mAvg">–</div></div>
-    <div class="metric"><div class="label">Best</div><div class="value" id="mBest">–</div></div>
-    <div class="metric"><div class="label">Active Days</div><div class="value" id="mActive">–</div></div>
-  </div>
+<section>
+  <h2>Activities</h2>
+  <div id="activityList"></div>
 </section>
 
-<!-- SETTINGS -->
-<section id="settings" class="tab">
-  <div class="card">
-    <h2 id="activityFormTitle">Add Activity</h2>
-
-    <input id="actName" placeholder="Activity name" />
-    <select id="actUnit">
-      <option value="count">Count</option>
-      <option value="minutes">Minutes</option>
-      <option value="ml">ml</option>
-    </select>
-
-    <input id="actGoal" type="number" placeholder="Daily goal" />
-
-    <div class="time-row">
-      <input id="actStart" type="time" />
-      <input id="actEnd" type="time" />
-    </div>
-
-    <select id="actFreq">
-      <option value="daily">Daily</option>
-      <option value="alternate">Alternate days</option>
-      <option value="custom">Custom days</option>
-    </select>
-
-    <div id="weekdays" class="weekdays hidden">
-      <label><input type="checkbox" value="MO">Mon</label>
-      <label><input type="checkbox" value="TU">Tue</label>
-      <label><input type="checkbox" value="WE">Wed</label>
-      <label><input type="checkbox" value="TH">Thu</label>
-      <label><input type="checkbox" value="FR">Fri</label>
-      <label><input type="checkbox" value="SA">Sat</label>
-      <label><input type="checkbox" value="SU">Sun</label>
-    </div>
-
-    <button id="saveActivityBtn">Save Activity</button>
-  </div>
-
-  <div class="card">
-    <h2>Activities</h2>
-    <div id="activityList"></div>
-  </div>
-
-  <div class="card">
-    <h2>Preferences</h2>
-    <button id="themeToggle">Dark / Light</button>
-  </div>
+<section>
+  <h2>Log</h2>
+  <input type="date" id="logDate">
+  <div id="logInputs"></div>
 </section>
 
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav">
-  <button data-tab="log" class="active">🏃<span>Log</span></button>
-  <button data-tab="summary">📊<span>Summary</span></button>
-  <button data-tab="settings">⚙️<span>Settings</span></button>
-</nav>
+<section>
+  <h2>Summary</h2>
+  <select id="summaryActivity"></select>
+  <select id="summaryRange">
+    <option value="daily">Daily</option>
+    <option value="weekly">Weekly</option>
+    <option value="monthly">Monthly</option>
+    <option value="yearly">Yearly</option>
+  </select>
+
+  <div class="summary">
+    <div>Total: <span id="sTotal">0</span></div>
+    <div>Average: <span id="sAvg">0</span></div>
+    <div>Best day: <span id="sBest">0</span></div>
+    <div>Active days: <span id="sActive">0</span></div>
+  </div>
+</section>
 
 <script src="script.js"></script>
 </body>
