@@ -307,38 +307,6 @@ values.forEach((v,i)=>{
   ctx.fill();
 });
 
-  document.getElementById("sTotal").textContent=days.reduce((a,b)=>a+b,0);
-  document.getElementById("sAvg").textContent=days.length?Math.round(days.reduce((a,b)=>a+b,0)/days.length):0;
-  document.getElementById("sBest").textContent=Math.max(0,...days);
-  document.getElementById("sBestSet").textContent=Math.max(0,...sets);
-  document.getElementById("sActive").textContent=days.length;
-  document.getElementById("sStreak").textContent=calculateStreak(l, id);
-
-  ctx.clearRect(0,0,320,180);
-  if(!days.length) return;
-
-  const max=Math.max(...days,1);
-
-  ctx.beginPath();
-  days.forEach((v,i)=>{
-    const x=i*(320/(days.length-1||1));
-    const y=180-(v/max)*150-10;
-    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
-  });
-
-  // Stroke
-  ctx.strokeStyle="#F57F5B";
-  ctx.lineWidth=2;
-  ctx.stroke();
-
-  // Fill
-  ctx.lineTo(320,180);
-  ctx.lineTo(0,180);
-  ctx.closePath();
-  ctx.fillStyle="rgba(245,127,91,0.2)";
-  ctx.fill();
-}
-
 function exportCalendar(a){
   if(!a.startTime || !a.endTime){
     alert("Please set start and end time for this activity.");
