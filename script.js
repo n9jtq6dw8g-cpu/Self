@@ -205,42 +205,54 @@ function renderHistory(){
   });
 }
 
-/* ---------- SUMMARY ---------- */
+/* ---------- SUMMARY (FIXED RANGE LOGIC) ---------- */
 const ctx=document.getElementById("summaryGraph").getContext("2d");
 document.getElementById("summaryActivity").onchange=renderSummary;
 document.getElementById("summaryRange").onchange=renderSummary;
 
+function getBucket(dateStr, range){
+  const d=new Date(dateStr);
+  if(range==="weekly"){
+    const onejan=new Date(d.getFullYear(),0,1);
+    return d.getFullYear()+"-W"+Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7);
+  }
+  if(range==="monthly") return d.getFullYear()+"-"+(d.getMonth()+1);
+  if(range==="yearly") return d.getFullYear().toString();
+  return dateStr;
+}
+
 function renderSummary(){
   const id=document.getElementById("summaryActivity").value;
+  const range=document.getElementById("summaryRange").value;
   if(!id) return;
 
   const logs=load(LOG_KEY);
-  let total=0, days=0, sets=[], daily=[];
+  const buckets={};
+  const sets=[];
 
-  Object.keys(logs).sort().forEach(d=>{
+  Object.keys(logs).forEach(d=>{
     if(logs[d][id]){
+      const key = range==="all" ? "all" : getBucket(d,range);
+      buckets[key]=buckets[key]||0;
       const sum=logs[d][id].reduce((a,b)=>a+b,0);
-      daily.push(sum);
-      total+=sum;
-      days++;
+      buckets[key]+=sum;
       logs[d][id].forEach(v=>sets.push(v));
     }
   });
 
+  const values=Object.values(buckets);
+
+  const total=values.reduce((a,b)=>a+b,0);
+  const days=values.length;
+
   document.getElementById("sTotal").textContent=total;
   document.getElementById("sAvg").textContent=days?Math.round(total/days):0;
-  document.getElementById("sBest").textContent=daily.length?Math.max(...daily):0;
+  document.getElementById("sBest").textContent=values.length?Math.max(...values):0;
   document.getElementById("sBestSet").textContent=sets.length?Math.max(...sets):0;
   document.getElementById("sActive").textContent=days;
+  document.getElementById("sStreak").textContent=days;
 
-  let streak=0;
-  Object.keys(logs).sort().reverse().forEach(d=>{
-    if(logs[d][id]) streak++;
-    else if(streak) return;
-  });
-  document.getElementById("sStreak").textContent=streak;
-
-  drawGraph(daily);
+  drawGraph(values);
 }
 
 function drawGraph(data){
