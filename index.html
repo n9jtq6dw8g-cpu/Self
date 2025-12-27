@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Health Tracker – Core + Logs</title>
+  <title>Health Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -57,10 +57,8 @@
 
 <section>
   <h2>View / Edit Logs</h2>
-
   <select id="logViewActivity"></select>
   <input type="date" id="logViewDate">
-
   <div id="logViewer"></div>
 </section>
 
@@ -72,14 +70,22 @@
     <option value="weekly">Weekly</option>
     <option value="monthly">Monthly</option>
     <option value="yearly">Yearly</option>
+    <option value="all">All Time</option>
   </select>
 
   <div class="summary">
     <div>Total: <span id="sTotal">0</span></div>
     <div>Average: <span id="sAvg">0</span></div>
     <div>Best day: <span id="sBest">0</span></div>
+    <div>Best set: <span id="sBestSet">0</span></div>
     <div>Active days: <span id="sActive">0</span></div>
   </div>
+</section>
+
+<section>
+  <h2>Backup & Restore</h2>
+  <button id="exportData">Export Data (JSON)</button>
+  <input type="file" id="importData" accept=".json">
 </section>
 
 <script src="script.js" defer></script>
