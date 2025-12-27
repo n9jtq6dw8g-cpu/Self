@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ---------------- NAV ---------------- */
+  /* ================= NAVIGATION ================= */
   const screens = {
     log: document.getElementById("screen-log"),
     summary: document.getElementById("screen-summary"),
@@ -13,10 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.classList.add("active");
       Object.values(screens).forEach(s => s.classList.remove("active"));
       screens[btn.dataset.target].classList.add("active");
+      if (btn.dataset.target === "summary") renderSummary();
     };
   });
 
-  /* ---------------- STORAGE ---------------- */
+  /* ================= STORAGE ================= */
   const ACT_KEY = "activities";
   const LOG_KEY = "logs";
 
@@ -24,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const today = () => new Date().toISOString().split("T")[0];
 
-  /* ---------------- ACTIVITY (PROFILE) ---------------- */
+  /* ================= ACTIVITY (PROFILE) ================= */
   let editId = null;
 
   const actName = document.getElementById("actName");
@@ -113,6 +114,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         activityList.appendChild(div);
       });
+
+    populateSummaryActivities();
   }
 
   function startEdit(a) {
@@ -132,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
     weekdays.classList.toggle("hidden", a.frequency !== "custom");
   }
 
-  /* ---------------- LOG (INPUT + HISTORY) ---------------- */
+  /* ================= LOG (INPUT + HISTORY) ================= */
   const logActivity = document.getElementById("logActivity");
   const logDate = document.getElementById("logDate");
   const logInputs = document.getElementById("logInputs");
@@ -178,6 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
     save(LOG_KEY, logs);
     document.getElementById("logValue").value = "";
     renderLogHistory();
+    renderSummary();
   }
 
   function renderLogHistory() {
@@ -204,6 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
         saveBtn.onclick = () => {
           logs[date][id][idx] = Number(input.value);
           save(LOG_KEY, logs);
+          renderSummary();
         };
 
         delBtn.onclick = () => {
@@ -211,6 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (logs[date][id].length === 0) delete logs[date][id];
           save(LOG_KEY, logs);
           renderLogHistory();
+          renderSummary();
         };
 
         day.appendChild(row);
@@ -220,14 +226,118 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  logActivity.onchange = renderLogHistory;
+  logActivity.onchange = () => {
+    renderLogInput();
+    renderLogHistory();
+  };
 
-  /* ---------------- SUMMARY & GRAPH ---------------- */
-  // (unchanged from V10.1 – your existing code still works)
+  /* ================= SUMMARY + GRAPH ================= */
+  const summaryActivity = document.getElementById("summaryActivity");
+  const summaryRange = document.getElementById("summaryRange");
+
+  const sTotal = document.getElementById("sTotal");
+  const sAvg = document.getElementById("sAvg");
+  const sBest = document.getElementById("sBest");
+  const sBestSet = document.getElementById("sBestSet");
+  const sActive = document.getElementById("sActive");
+  const sStreak = document.getElementById("sStreak");
+
+  const canvas = document.getElementById("summaryGraph");
+  const ctx = canvas.getContext("2d");
+
+  summaryActivity.onchange = renderSummary;
+  summaryRange.onchange = renderSummary;
+
+  function populateSummaryActivities() {
+    const acts = load(ACT_KEY);
+    const current = summaryActivity.value;
+
+    summaryActivity.innerHTML = Object.values(acts)
+      .filter(a => !a.archived)
+      .map(a => `<option value="${a.id}">${a.name}</option>`)
+      .join("");
+
+    if (current) summaryActivity.value = current;
+  }
+
+  function renderSummary() {
+    const id = summaryActivity.value;
+    if (!id) return;
+
+    const logs = load(LOG_KEY);
+    const daysMap = { daily:7, weekly:30, monthly:180, yearly:365, all:3650 };
+    const days = daysMap[summaryRange.value];
+
+    let data = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      data.push((logs[key]?.[id] || []).reduce((a,b)=>a+b,0));
+    }
+
+    drawGraph(data);
+
+    const nonZero = data.filter(v => v > 0);
+    const total = nonZero.reduce((a,b)=>a+b,0);
+
+    sTotal.textContent = total;
+    sActive.textContent = nonZero.length;
+    sAvg.textContent = nonZero.length ? Math.round(total / nonZero.length) : 0;
+    sBest.textContent = Math.max(...data, 0);
+    sBestSet.textContent = Math.max(
+      ...Object.values(logs).flatMap(d => d[id] || []),
+      0
+    );
+    sStreak.textContent = nonZero.length;
+  }
+
+  function drawGraph(values) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const max = Math.max(...values,1);
+    const stepX = canvas.width / (values.length - 1);
+
+    ctx.beginPath();
+    ctx.strokeStyle = "#2aa198";
+    ctx.lineWidth = 2;
+
+    values.forEach((v,i)=>{
+      const x = i * stepX;
+      const y = canvas.height - (v / max) * canvas.height;
+      i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+
+    ctx.stroke();
+  }
+
+  /* ================= BACKUP ================= */
+  document.getElementById("exportData").onclick = () => {
+    const data = { activities: load(ACT_KEY), logs: load(LOG_KEY) };
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "health-tracker-backup.json";
+    a.click();
+  };
+
+  document.getElementById("importData").onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      const data = JSON.parse(r.result);
+      save(ACT_KEY, data.activities || {});
+      save(LOG_KEY, data.logs || {});
+      renderAll();
+    };
+    r.readAsText(file);
+  };
 
   function renderAll() {
     renderActivities();
     renderLogUI();
+    populateSummaryActivities();
+    renderSummary();
   }
 
   renderAll();
