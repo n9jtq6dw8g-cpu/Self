@@ -18,14 +18,13 @@ section {
 
 button {
   margin-top: 8px;
+  margin-right: 6px;
 }
 
-.log-row {
-  display: flex;
-  gap: 8px;
+.secondary {
+  background: #eee;
+}
+
+.summary div {
   margin-top: 6px;
-}
-
-.log-row input {
-  width: 80px;
 }
