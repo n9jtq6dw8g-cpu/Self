@@ -1,124 +1,89 @@
-/* ================================
-   RETRO CALM UI – PHASE 1
-   ================================ */
-
-/* -------- FONT -------- */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
-/* -------- COLOR SYSTEM -------- */
 :root{
-  /* Brand palette */
-  --teal: #8CC7C1;
-  --yellow: #FACA78;
-  --peach: #F57F5B;
-  --red: #DD5341;
-  --brown: #794A3A;
+  --teal:#8CC7C1;
+  --yellow:#FACA78;
+  --peach:#F57F5B;
+  --red:#DD5341;
+  --brown:#794A3A;
 
-  /* Surfaces */
-  --bg: #FFF6E8;
-  --card: #FFFFFF;
-  --surface: #FFF1DB;
+  --bg:#FFF6E8;
+  --card:#FFFFFF;
+  --surface:#FFF1DB;
 
-  /* Text */
-  --text-main: #4A3A2A;
-  --text-muted: #7A6A58;
+  --text-main:#4A3A2A;
+  --text-muted:#7A6A58;
 
-  /* UI */
-  --accent: var(--peach);
-  --border: rgba(0,0,0,0.06);
+  --accent:var(--peach);
+  --border:rgba(0,0,0,0.06);
 
-  /* Radius & spacing */
-  --radius-lg: 18px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
+  --r-lg:18px;
+  --r-md:14px;
+  --r-sm:10px;
 
-  --space-lg: 18px;
-  --space-md: 12px;
-  --space-sm: 8px;
+  --s-lg:20px;
+  --s-md:12px;
+  --s-sm:8px;
 }
 
-/* -------- DARK MODE -------- */
 body.dark{
-  --bg: #2A1E18;
-  --card: #3A2A22;
-  --surface: #33241E;
-
-  --text-main: #F6EEDF;
-  --text-muted: #CBBBAA;
-
-  --border: rgba(255,255,255,0.06);
+  --bg:#2A1E18;
+  --card:#3A2A22;
+  --surface:#33241E;
+  --text-main:#F6EEDF;
+  --text-muted:#CBBBAA;
+  --border:rgba(255,255,255,0.06);
 }
 
-/* -------- RESET -------- */
 *{
-  box-sizing: border-box;
-  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  box-sizing:border-box;
+  font-family:'Nunito',system-ui,sans-serif;
 }
 
 body{
   margin:0;
   background:var(--bg);
   color:var(--text-main);
-  -webkit-font-smoothing:antialiased;
 }
 
-/* -------- HEADER -------- */
-header{
-  background:var(--surface);
-  padding:16px;
-  text-align:center;
-  font-weight:800;
-  font-size:20px;
-  border-bottom:1px solid var(--border);
-}
-
-/* -------- SCREENS -------- */
 .screen{
   display:none;
-  padding:var(--space-lg);
+  padding:var(--s-lg);
 }
 
-.screen.active{
-  display:block;
+.screen.active{ display:block; }
+
+/* -------- TITLES -------- */
+.screen-title{
+  font-size:28px;
+  font-weight:800;
+  margin-bottom:var(--s-md);
 }
 
-/* -------- INPUTS -------- */
-input,
-select,
-button{
-  width:100%;
-  padding:12px 14px;
-  margin:6px 0;
-  border-radius:var(--radius-md);
-  border:1px solid var(--border);
-  font-size:15px;
-  background:var(--card);
-  color:var(--text-main);
-}
-
-input::placeholder{
+.section-title{
+  font-size:18px;
+  font-weight:700;
+  margin:18px 0 8px;
   color:var(--text-muted);
 }
 
-select{
-  appearance:none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-  background-position:
-    calc(100% - 18px) 55%,
-    calc(100% - 12px) 55%;
-  background-size:6px 6px;
-  background-repeat:no-repeat;
+/* -------- INPUTS -------- */
+input,select,button{
+  width:100%;
+  padding:12px 14px;
+  margin:6px 0;
+  border-radius:var(--r-md);
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text-main);
+  font-size:15px;
 }
 
-/* -------- BUTTONS -------- */
 button{
   background:var(--accent);
   color:#fff;
   font-weight:700;
   border:none;
-  cursor:pointer;
 }
 
 button.secondary{
@@ -126,18 +91,14 @@ button.secondary{
   color:var(--text-main);
 }
 
-/* -------- ROW -------- */
-.row{
-  display:flex;
-  gap:var(--space-sm);
-}
+.row{ display:flex; gap:var(--s-sm); }
 
-/* -------- CARDS -------- */
-.card{
+/* -------- GRAPH -------- */
+.graph-card{
   background:var(--card);
-  border-radius:var(--radius-lg);
-  padding:var(--space-md);
-  margin-bottom:var(--space-md);
+  border-radius:var(--r-lg);
+  padding:14px;
+  margin:12px 0;
   border:1px solid var(--border);
 }
 
@@ -145,13 +106,12 @@ button.secondary{
 .metrics{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:var(--space-md);
-  margin-top:var(--space-md);
+  gap:var(--s-md);
 }
 
 .metrics div{
   background:var(--surface);
-  border-radius:var(--radius-md);
+  border-radius:var(--r-md);
   padding:14px 10px;
   text-align:center;
   font-weight:700;
@@ -164,38 +124,38 @@ button.secondary{
   font-weight:800;
 }
 
-/* -------- HISTORY -------- */
-.history{
-  margin-top:var(--space-md);
-}
-
+/* -------- HISTORY (CALM, COLLAPSED READY) -------- */
 .history-day{
-  margin-bottom:var(--space-md);
+  background:var(--card);
+  border-radius:var(--r-md);
+  padding:10px 12px;
+  margin-bottom:10px;
+  border:1px solid var(--border);
 }
 
 .history-day strong{
-  display:block;
-  margin-bottom:6px;
+  font-size:14px;
   color:var(--text-muted);
 }
 
 .history-activity{
-  margin-left:8px;
+  margin-top:6px;
+  font-weight:700;
 }
 
 .history-set{
   display:flex;
   align-items:center;
   gap:6px;
-  margin-left:16px;
+  margin-left:12px;
   font-size:14px;
 }
 
 .history-set button{
-  padding:4px 6px;
-  font-size:12px;
   background:var(--surface);
   color:var(--text-main);
+  font-size:12px;
+  padding:4px 6px;
 }
 
 /* -------- BOTTOM NAV -------- */
@@ -222,5 +182,4 @@ button.secondary{
   color:var(--accent);
 }
 
-/* -------- MISC -------- */
 .hidden{ display:none; }
