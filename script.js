@@ -307,6 +307,8 @@ values.forEach((v,i)=>{
   ctx.fill();
 });
 
+}
+
 function exportCalendar(a){
   if(!a.startTime || !a.endTime){
     alert("Please set start and end time for this activity.");
