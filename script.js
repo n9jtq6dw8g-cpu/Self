@@ -78,48 +78,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderActivities() {
-    const acts = load(ACT_KEY);
-    activityList.innerHTML = "";
+  const acts = load(ACT_KEY);
+  activityList.innerHTML = "";
 
-    Object.values(acts).forEach(a => {
-      const div = document.createElement("div");
-      div.innerHTML = `
-        <strong>${a.name}</strong>
-        ${a.active ? "" : "(Paused)"}
-        <br>
-        <button>Edit</button>
-        <button>${a.active ? "Pause" : "Resume"}</button>
-      `;
+  Object.values(acts).forEach(a => {
+    const div = document.createElement("div");
 
-      div.querySelector("button:nth-child(3)").onclick = () => {
-        a.active = !a.active;
-        save(ACT_KEY, acts);
-        renderAll();
-      };
+    div.innerHTML = `
+      <strong>${a.name}</strong> ${a.active ? "" : "(Paused)"}
+      <br>
+      <button class="edit-btn">Edit</button>
+      <button class="toggle-btn">${a.active ? "Pause" : "Resume"}</button>
+    `;
 
-      div.querySelector("button:nth-child(2)").onclick = () => {
-        editId = a.id;
-        editLabel.textContent = `Editing: ${a.name}`;
-        cancelBtn.classList.remove("hidden");
-        actName.value = a.name;
-        actUnit.value = a.unit;
-        actStart.value = a.startTime;
-        actEnd.value = a.endTime;
-        actFreq.value = a.frequency;
-        weekdays.querySelectorAll("input").forEach(
-          i => (i.checked = a.days.includes(i.value))
-        );
-        updateWeekdays();
-      };
+    div.querySelector(".edit-btn").onclick = () => {
+      editId = a.id;
+      editLabel.textContent = `Editing: ${a.name}`;
+      cancelBtn.classList.remove("hidden");
 
-      activityList.appendChild(div);
-    });
+      actName.value = a.name;
+      actUnit.value = a.unit;
+      actStart.value = a.startTime;
+      actEnd.value = a.endTime;
+      actFreq.value = a.frequency;
 
-    const activeActs = Object.values(acts).filter(a => a.active);
-    summaryActivity.innerHTML = activeActs
-      .map(a => `<option value="${a.id}">${a.name}</option>`)
-      .join("");
-  }
+      weekdays.querySelectorAll("input").forEach(
+        i => (i.checked = a.days.includes(i.value))
+      );
+      updateWeekdays();
+    };
+
+    div.querySelector(".toggle-btn").onclick = () => {
+      a.active = !a.active;
+      save(ACT_KEY, acts);
+      renderAll();
+    };
+
+    activityList.appendChild(div);
+  });
+
+  const activeActs = Object.values(acts).filter(a => a.active);
+  summaryActivity.innerHTML = activeActs
+    .map(a => `<option value="${a.id}">${a.name}</option>`)
+    .join("");
+}
 
   logDate.value = today();
 
