@@ -1,131 +1,25 @@
-:root {
-  --bg: #f5f9f9;
-  --card: #ffffff;
-  --text: #0f172a;
-  --muted: #6b7280;
-  --accent: #14b8a6;
-  --grid: rgba(0,0,0,0.06);
-}
-
-body.dark {
-  --bg: #0f172a;
-  --card: #111827;
-  --text: #f9fafb;
-  --muted: #9ca3af;
-  --accent: #2dd4bf;
-  --grid: rgba(255,255,255,0.08);
-}
-
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: system-ui, sans-serif;
+  padding: 16px;
 }
 
-.tab {
-  display: none;
-  padding: 16px 16px 80px;
-}
-.tab.active { display: block; }
-
-.card {
-  background: var(--card);
-  border-radius: 18px;
-  padding: 18px;
-  margin-bottom: 16px;
+section {
+  margin-bottom: 24px;
 }
 
-.summary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.range-control { position: relative; }
-#rangeBtn {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: var(--accent);
-}
-
-.range-menu {
-  position: absolute;
-  right: 0;
-  top: 28px;
-  background: var(--card);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-}
-.range-menu div {
-  padding: 10px 14px;
-  cursor: pointer;
-}
-.range-menu div:hover { background: var(--bg); }
-.hidden { display: none; }
-
-input, select, button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 10px;
-  border-radius: 14px;
-  border: none;
-  background: var(--bg);
-  color: var(--text);
-}
-
-button { background: var(--accent); color: white; }
-
-.time-row { display: flex; gap: 10px; }
-
-.weekdays {
+.row {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
-.metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.hidden {
+  display: none;
 }
 
-.metric {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 14px;
-  text-align: center;
+button {
+  margin-top: 10px;
 }
 
-.metric .label { font-size: 12px; color: var(--muted); }
-.metric .value { font-size: 20px; font-weight: 600; }
-
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--card);
-  display: flex;
-  border-top: 1px solid var(--grid);
-}
-
-.bottom-nav button {
-  flex: 1;
-  background: none;
-  border: none;
-  padding: 10px 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.bottom-nav button.active {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.bottom-nav span {
-  display: block;
-  font-size: 11px;
+.summary div {
+  margin-top: 6px;
 }
