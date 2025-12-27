@@ -117,7 +117,7 @@ body.dark .bottom-nav {
   background: rgba(42,161,152,0.2);
 }
 
-/* everything from V11 stays the same */
+/* HISTORY */
 
 .history {
   margin-top: 10px;
@@ -134,7 +134,6 @@ body.dark .bottom-nav {
 
 .history-activity {
   margin-left: 10px;
-  margin-bottom: 4px;
 }
 
 .history-set {
