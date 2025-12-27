@@ -134,3 +134,17 @@ canvas {
 .nav-btn.active {
   opacity: 1;
 }
+
+.icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+}
+
+.card .row {
+  align-items: center;
+}
+
+.card button {
+  flex: 1;
+}
