@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const today = () => new Date().toISOString().split("T")[0];
 
-  /* ---------- ELEMENTS ---------- */
   const actName = document.getElementById("actName");
   const actUnit = document.getElementById("actUnit");
   const actStart = document.getElementById("actStart");
@@ -31,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sTotal = document.getElementById("sTotal");
   const sAvg = document.getElementById("sAvg");
   const sBest = document.getElementById("sBest");
+  const sBestSet = document.getElementById("sBestSet");
   const sActive = document.getElementById("sActive");
 
   /* ---------- FREQUENCY ---------- */
@@ -81,8 +81,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     Object.values(acts).forEach(a => {
       const div = document.createElement("div");
-      div.textContent = `${a.name} (${a.startTime}–${a.endTime})`;
-      div.onclick = () => loadForEdit(a.id);
+      div.innerHTML = `
+        <strong>${a.name}</strong> (${a.startTime}–${a.endTime})
+        <br>
+        <button>Export Calendar</button>
+      `;
+      div.querySelector("strong").onclick = () => loadForEdit(a.id);
+      div.querySelector("button").onclick = () => exportCalendar(a.id);
       activityList.appendChild(div);
     });
 
@@ -197,29 +202,111 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const range = summaryRange.value;
     const logs = load(LOG_KEY);
-    const days = { daily: 1, weekly: 7, monthly: 30, yearly: 365 }[range];
 
-    let total = 0, best = 0, active = 0;
+    let dates = [];
+    let total = 0, bestDay = 0, bestSet = 0, active = 0;
 
-    for (let i = 0; i < days; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().split("T")[0];
-      const sum = (logs[key]?.[id] || []).reduce((a, b) => a + b, 0);
-      if (sum > 0) {
-        total += sum;
-        active++;
-        best = Math.max(best, sum);
+    if (range === "all") {
+      dates = Object.keys(logs);
+    } else {
+      const days = { daily: 1, weekly: 7, monthly: 30, yearly: 365 }[range];
+      for (let i = 0; i < days; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().split("T")[0]);
       }
     }
+
+    dates.forEach(date => {
+      const sets = logs[date]?.[id];
+      if (!sets || !sets.length) return;
+
+      const dayTotal = sets.reduce((a, b) => a + b, 0);
+      total += dayTotal;
+      active++;
+      bestDay = Math.max(bestDay, dayTotal);
+      sets.forEach(v => bestSet = Math.max(bestSet, v));
+    });
 
     sTotal.textContent = total;
     sActive.textContent = active;
     sAvg.textContent = active ? Math.round(total / active) : 0;
-    sBest.textContent = best;
+    sBest.textContent = bestDay;
+    sBestSet.textContent = bestSet;
   }
 
-  /* ---------- INIT ---------- */
+  /* ---------- CALENDAR EXPORT ---------- */
+  function exportCalendar(id) {
+    const a = load(ACT_KEY)[id];
+    if (!a) return;
+
+    const now = new Date();
+    const start = new Date();
+    const end = new Date();
+
+    const [sh, sm] = a.startTime.split(":");
+    const [eh, em] = a.endTime.split(":");
+
+    start.setHours(sh, sm, 0);
+    end.setHours(eh, em, 0);
+
+    const until = new Date(start);
+    until.setMonth(until.getMonth() + 3);
+
+    const fmt = d => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+    let rrule = "FREQ=DAILY";
+    if (a.frequency === "alternate") rrule += ";INTERVAL=2";
+    if (a.frequency === "custom" && a.days.length)
+      rrule += ";BYDAY=" + a.days.join(",");
+    rrule += ";UNTIL=" + fmt(until);
+
+    const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:${id}-${Date.now()}
+DTSTAMP:${fmt(now)}
+DTSTART:${fmt(start)}
+DTEND:${fmt(end)}
+RRULE:${rrule}
+SUMMARY:${a.name} (Health Tracker)
+END:VEVENT
+END:VCALENDAR`;
+
+    const blob = new Blob([ics], { type: "text/calendar" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${a.name}.ics`;
+    link.click();
+  }
+
+  /* ---------- BACKUP ---------- */
+  document.getElementById("exportData").onclick = () => {
+    const data = {
+      activities: load(ACT_KEY),
+      logs: load(LOG_KEY)
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "health-tracker-backup.json";
+    link.click();
+  };
+
+  document.getElementById("importData").onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const data = JSON.parse(reader.result);
+      save(ACT_KEY, data.activities || {});
+      save(LOG_KEY, data.logs || {});
+      renderAll();
+    };
+    reader.readAsText(file);
+  };
+
   function renderAll() {
     renderActivities();
     renderLog();
