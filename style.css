@@ -1,5 +1,5 @@
 body {
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   padding: 16px;
 }
 
@@ -27,4 +27,11 @@ button {
 
 .summary div {
   margin-top: 6px;
+}
+
+canvas {
+  display: block;
+  margin: 12px 0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
 }
