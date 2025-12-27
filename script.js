@@ -1,6 +1,5 @@
-alert("script.js loaded");
-
 document.addEventListener("DOMContentLoaded",()=>{
+  alert("script.js loaded");
 
 const archivedToggle=document.getElementById("archivedToggle");
 const archivedList=document.getElementById("archivedActivityList");
@@ -133,72 +132,7 @@ function renderActivities(){
 
   populate();
 }
-  archivedList.appendChild(arc);
-  return;
-}
-}
-
-    const card = document.createElement("div");
-    card.className = "card" + (a.active ? "" : " paused");
-
-    card.innerHTML = `
-      <strong>${a.name}</strong> (${a.unit})
-      <div class="row" style="margin-top:8px;">
-        <button class="secondary edit-btn">Edit</button>
-        <button class="secondary toggle-btn">${a.active ? "Pause" : "Resume"}</button>
-        <button class="secondary archive-btn">Archive</button>
-        <button class="secondary cal-btn">Calendar</button>
-      </div>
-    `;
-
-    const editBtn   = card.querySelector(".edit-btn");
-    const toggleBtn = card.querySelector(".toggle-btn");
-    const archiveBtn= card.querySelector(".archive-btn");
-    const calBtn    = card.querySelector(".cal-btn");
-
-    /* EDIT */
-    editBtn.onclick = ()=>{
-      edit = a.id;
-      actName.value = a.name;
-      actUnit.value = a.unit;
-      actStart.value = a.startTime || "";
-      actEnd.value = a.endTime || "";
-      actFreq.value = a.frequency || "daily";
-      weekdays.classList.toggle("hidden", a.frequency !== "custom");
-      weekdays.querySelectorAll("input").forEach(i=>{
-        i.checked = a.days?.includes(i.value);
-      });
-      document.getElementById("cancelEdit").classList.remove("hidden");
-    };
-
-    /* PAUSE / RESUME */
-    toggleBtn.onclick = ()=>{
-      a.active = !a.active;
-      save(ACT, acts);
-      renderActivities();
-      populate();
-    };
-
-    /* ARCHIVE */
-    archiveBtn.onclick = ()=>{
-      a.archived = true;
-      a.active = false;
-      save(ACT, acts);
-      renderActivities();
-      populate();
-    };
-
-    /* CALENDAR EXPORT */
-    calBtn.onclick = ()=>{
-      exportCalendar(a);
-    };
-
-    list.appendChild(card);
-  });
-
-  populate();
-}
-
+  
 /* LOGGING */
 const date=document.getElementById("logDate");
 date.value=new Date().toISOString().split("T")[0];
