@@ -144,7 +144,12 @@ function renderLogEntry(){
   const a=acts[logActivity.value];
   if(!a){ logEntry.innerHTML=""; return; }
 
-  logEntry.innerHTML=`<input type="number" id="logVal" placeholder="${a.unit}"><button>Add</button>`;
+  logEntry.innerHTML=`
+  <div class="log-input">
+    <input type="number" id="logVal" placeholder="${a.unit}">
+    <button>Add</button>
+  </div>
+`;
   logEntry.querySelector("button").onclick=()=>{
     const logs=load(LOG_KEY);
     const d=logDate.value;
@@ -175,9 +180,15 @@ function renderHistory(){
       logs[date][id].forEach((v,idx)=>{
         const set=document.createElement("div");
         set.className="history-set";
-        set.innerHTML=`• ${v} ${acts[id]?.unit||""}
-          <button>✏️</button>
-          <button>🗑️</button>`;
+        set.innerHTML=`
+  <span class="set-value">${v} ${acts[id]?.unit||""}</span>
+  <button class="icon-btn edit">
+    <svg><use href="#icon-edit"/></svg>
+  </button>
+  <button class="icon-btn delete">
+    <svg><use href="#icon-delete"/></svg>
+  </button>
+`;
 
         const [editBtn,delBtn]=set.querySelectorAll("button");
 
