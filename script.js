@@ -1,4 +1,4 @@
-console.log("JS booted");
+alert("script.js loaded");
 
 document.addEventListener("DOMContentLoaded",()=>{
 
