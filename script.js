@@ -4,12 +4,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const LOG_KEY = "logs";
   let editId = null;
 
-  /* ---------- utils ---------- */
   const load = k => JSON.parse(localStorage.getItem(k)) || {};
   const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const today = () => new Date().toISOString().split("T")[0];
 
-  /* ---------- elements ---------- */
+  /* ---------- ELEMENTS ---------- */
   const actName = document.getElementById("actName");
   const actUnit = document.getElementById("actUnit");
   const actStart = document.getElementById("actStart");
@@ -22,6 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const logDate = document.getElementById("logDate");
   const logInputs = document.getElementById("logInputs");
 
+  const logViewActivity = document.getElementById("logViewActivity");
+  const logViewDate = document.getElementById("logViewDate");
+  const logViewer = document.getElementById("logViewer");
+
   const summaryActivity = document.getElementById("summaryActivity");
   const summaryRange = document.getElementById("summaryRange");
 
@@ -30,15 +33,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const sBest = document.getElementById("sBest");
   const sActive = document.getElementById("sActive");
 
-  /* ---------- frequency ---------- */
+  /* ---------- FREQUENCY ---------- */
   function updateWeekdays() {
     weekdays.classList.toggle("hidden", actFreq.value !== "custom");
   }
-  actFreq.addEventListener("change", updateWeekdays);
+  actFreq.onchange = updateWeekdays;
   updateWeekdays();
 
-  /* ---------- activities ---------- */
-  saveBtn.addEventListener("click", () => {
+  /* ---------- ACTIVITIES ---------- */
+  saveBtn.onclick = () => {
     if (!actName.value) return alert("Name required");
     if (!actStart.value || !actEnd.value || actStart.value >= actEnd.value)
       return alert("Invalid time");
@@ -60,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
     save(ACT_KEY, acts);
     resetForm();
     renderAll();
-  });
+  };
 
   function resetForm() {
     editId = null;
@@ -83,9 +86,12 @@ document.addEventListener("DOMContentLoaded", () => {
       activityList.appendChild(div);
     });
 
-    summaryActivity.innerHTML = Object.values(acts)
+    const options = Object.values(acts)
       .map(a => `<option value="${a.id}">${a.name}</option>`)
       .join("");
+
+    summaryActivity.innerHTML = options;
+    logViewActivity.innerHTML = options;
   }
 
   function loadForEdit(id) {
@@ -102,8 +108,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateWeekdays();
   }
 
-  /* ---------- log ---------- */
+  /* ---------- LOGGING ---------- */
   logDate.value = today();
+  logViewDate.value = today();
 
   function renderLog() {
     const acts = load(ACT_KEY);
@@ -132,13 +139,57 @@ document.addEventListener("DOMContentLoaded", () => {
     logs[d][id] = logs[d][id] || [];
     logs[d][id].push(v);
     save(LOG_KEY, logs);
+
     input.value = "";
     renderSummary();
+    renderLogViewer();
   }
 
-  /* ---------- summary ---------- */
-  summaryActivity.addEventListener("change", renderSummary);
-  summaryRange.addEventListener("change", renderSummary);
+  /* ---------- LOG VIEWER ---------- */
+  logViewActivity.onchange = renderLogViewer;
+  logViewDate.onchange = renderLogViewer;
+
+  function renderLogViewer() {
+    const logs = load(LOG_KEY);
+    const d = logViewDate.value;
+    const id = logViewActivity.value;
+
+    logViewer.innerHTML = "";
+    const sets = logs[d]?.[id] || [];
+
+    sets.forEach((val, idx) => {
+      const row = document.createElement("div");
+      row.className = "log-row";
+
+      const input = document.createElement("input");
+      input.type = "number";
+      input.value = val;
+
+      const saveBtn = document.createElement("button");
+      saveBtn.textContent = "Save";
+      saveBtn.onclick = () => {
+        sets[idx] = Number(input.value);
+        save(LOG_KEY, logs);
+        renderSummary();
+      };
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Delete";
+      delBtn.onclick = () => {
+        sets.splice(idx, 1);
+        save(LOG_KEY, logs);
+        renderLogViewer();
+        renderSummary();
+      };
+
+      row.append(input, saveBtn, delBtn);
+      logViewer.appendChild(row);
+    });
+  }
+
+  /* ---------- SUMMARY ---------- */
+  summaryActivity.onchange = renderSummary;
+  summaryRange.onchange = renderSummary;
 
   function renderSummary() {
     const id = summaryActivity.value;
@@ -168,10 +219,11 @@ document.addEventListener("DOMContentLoaded", () => {
     sBest.textContent = best;
   }
 
-  /* ---------- init ---------- */
+  /* ---------- INIT ---------- */
   function renderAll() {
     renderActivities();
     renderLog();
+    renderLogViewer();
     renderSummary();
   }
 
