@@ -188,4 +188,12 @@ button.secondary{
   filter:grayscale(0.6);
 }
 
+.collapsed{
+  display:none;
+}
+
+.section-title.collapsible{
+  cursor:pointer;
+}
+
 .hidden{display:none;}
