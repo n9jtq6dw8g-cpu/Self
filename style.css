@@ -116,3 +116,36 @@ body.dark .bottom-nav {
 .nav-btn.active {
   background: rgba(42,161,152,0.2);
 }
+
+/* everything from V11 stays the same */
+
+.history {
+  margin-top: 10px;
+}
+
+.history-day {
+  margin-bottom: 12px;
+}
+
+.history-day strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.history-activity {
+  margin-left: 10px;
+  margin-bottom: 4px;
+}
+
+.history-set {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 20px;
+  margin-bottom: 2px;
+}
+
+.history-set button {
+  padding: 2px 6px;
+  font-size: 12px;
+}
