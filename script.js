@@ -216,53 +216,81 @@ document.getElementById("summaryActivity").onchange=renderSummary;
 document.getElementById("summaryRange").onchange=renderSummary;
 
 function renderSummary(){
-  const id=document.getElementById("summaryActivity").value;
-  const range=document.getElementById("summaryRange").value;
+  const id = document.getElementById("summaryActivity").value;
+  const range = document.getElementById("summaryRange").value;
   if(!id) return;
 
-  const logs=load(LOG_KEY);
-  const acts=load(ACT_KEY);
-  const act=acts[id];
+  const logs = load(LOG_KEY);
+  const acts = load(ACT_KEY);
+  const act = acts[id];
 
-  /* ---------- DAILY TOTALS ---------- */
-  const dayTotals=[];
-  Object.keys(logs).sort().forEach(d=>{
-    if(logs[d][id]){
-      dayTotals.push({
-        date:d,
-        total:logs[d][id].reduce((a,b)=>a+b,0)
-      });
+  /* ---------- WINDOW (Option A) ---------- */
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  let start = new Date(today);
+  let end = new Date(today);
+
+  if(range === "weekly"){
+    const day = today.getDay(); // 0=Sun
+    start.setDate(today.getDate() - day);
+  }
+  else if(range === "monthly"){
+    start = new Date(today.getFullYear(), today.getMonth(), 1);
+    end = new Date(today.getFullYear(), today.getMonth()+1, 0);
+  }
+  else if(range === "yearly"){
+    start = new Date(today.getFullYear(), 0, 1);
+    end = new Date(today.getFullYear(), 11, 31);
+  }
+  else if(range === "all"){
+    start = new Date("1970-01-01");
+  }
+
+  start.setHours(0,0,0,0);
+  end.setHours(23,59,59,999);
+
+  /* ---------- FILTER LOGS BY WINDOW ---------- */
+  const dayTotals = [];
+  const allSets = [];
+
+  Object.keys(logs).forEach(d=>{
+    const date = new Date(d);
+    if(date >= start && date <= end && logs[d][id]){
+      const sets = logs[d][id];
+      const sum = sets.reduce((a,b)=>a+b,0);
+      dayTotals.push({ date:d, total:sum });
+      sets.forEach(v=>allSets.push(v));
     }
   });
 
-  const total=dayTotals.reduce((a,b)=>a+b.total,0);
-  const activeDays=dayTotals.length;
-  const bestDay=activeDays?Math.max(...dayTotals.map(d=>d.total)):0;
-  const bestSet=Math.max(0,...dayTotals.flatMap(d=>logs[d.date][id]));
+  const total = dayTotals.reduce((a,b)=>a+b.total,0);
+  const activeDays = dayTotals.length;
+  const bestDay = activeDays ? Math.max(...dayTotals.map(d=>d.total)) : 0;
+  const bestSet = allSets.length ? Math.max(...allSets) : 0;
+  const avg = activeDays ? Math.round(total / activeDays) : 0;
 
-  /* ---------- SCHEDULE-AWARE STREAK ---------- */
-  let streak=0;
+  /* ---------- STREAK (SCHEDULE + WINDOW AWARE) ---------- */
+  let streak = 0;
+
   if(act){
-    const loggedDates=new Set(dayTotals.map(d=>d.date));
-    let cursor=new Date();
-    cursor.setHours(0,0,0,0);
+    const loggedDates = new Set(dayTotals.map(d=>d.date));
+    let cursor = new Date(today);
 
-    const isScheduledDay=(date)=>{
-      const day=date.toLocaleDateString("en-US",{weekday:"short"});
-      if(act.frequency==="daily") return true;
-      if(act.frequency==="alternate"){
-        const start=new Date(act.createdAt||dayTotals[0]?.date||date);
-        const diff=Math.floor((date-start)/(1000*60*60*24));
-        return diff%2===0;
-      }
-      if(act.frequency==="custom"){
-        return act.days.includes(day);
+    const isScheduledDay = (date)=>{
+      const wd = date.toLocaleDateString("en-US",{weekday:"short"});
+      if(act.frequency === "daily") return true;
+      if(act.frequency === "custom") return act.days.includes(wd);
+      if(act.frequency === "alternate"){
+        const base = new Date(dayTotals[0]?.date || today);
+        const diff = Math.floor((date-base)/(1000*60*60*24));
+        return diff % 2 === 0;
       }
       return false;
     };
 
-    while(true){
-      const ds=cursor.toISOString().split("T")[0];
+    while(cursor >= start){
+      const ds = cursor.toISOString().split("T")[0];
       if(isScheduledDay(cursor)){
         if(loggedDates.has(ds)) streak++;
         else break;
@@ -271,27 +299,27 @@ function renderSummary(){
     }
   }
 
-  /* ---------- GRAPH BUCKETING ---------- */
-  const buckets={};
+  /* ---------- GRAPH BUCKETING (SAME WINDOW) ---------- */
+  const buckets = {};
   dayTotals.forEach(d=>{
-    let key=d.date;
-    const dt=new Date(d.date);
-    if(range==="weekly") key=dt.getFullYear()+"-W"+Math.ceil(dt.getDate()/7);
-    if(range==="monthly") key=dt.getFullYear()+"-"+(dt.getMonth()+1);
-    if(range==="yearly") key=dt.getFullYear();
-    if(range==="all") key="all";
-    buckets[key]=(buckets[key]||0)+d.total;
+    let key = d.date;
+    const dt = new Date(d.date);
+    if(range === "weekly") key = "W" + dt.getWeek?.() || dt.toDateString();
+    if(range === "monthly") key = dt.getFullYear()+"-"+(dt.getMonth()+1);
+    if(range === "yearly") key = dt.getFullYear();
+    if(range === "all") key = "all";
+    buckets[key] = (buckets[key]||0) + d.total;
   });
 
-  const graphData=Object.values(buckets);
+  const graphData = Object.values(buckets);
 
   /* ---------- UI ---------- */
-  document.getElementById("sTotal").textContent=total;
-  document.getElementById("sAvg").textContent=activeDays?Math.round(total/activeDays):0;
-  document.getElementById("sBest").textContent=bestDay;
-  document.getElementById("sBestSet").textContent=bestSet;
-  document.getElementById("sActive").textContent=activeDays;
-  document.getElementById("sStreak").textContent=streak;
+  document.getElementById("sTotal").textContent = total;
+  document.getElementById("sAvg").textContent = avg;
+  document.getElementById("sBest").textContent = bestDay;
+  document.getElementById("sBestSet").textContent = bestSet;
+  document.getElementById("sActive").textContent = activeDays;
+  document.getElementById("sStreak").textContent = streak;
 
   drawGraph(graphData);
 }
