@@ -237,6 +237,10 @@ document.getElementById("summaryRange").onchange=renderSummary;
 
 function renderSummary(){
   const id=document.getElementById("summaryActivity").value;
+  if(!id){
+  ctx.clearRect(0,0,320,180);
+  return;
+}
   const range=document.getElementById("summaryRange").value;
   const l=load(LOG);
   const now=new Date(); now.setHours(0,0,0,0);
