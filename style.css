@@ -49,6 +49,7 @@ body{
 .screen{
   display:none;
   padding:var(--s-lg);
+  padding-bottom: 90px;
 }
 
 .screen.active{ display:block; }
