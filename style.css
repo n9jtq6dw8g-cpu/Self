@@ -184,3 +184,52 @@ button.secondary{
 }
 
 .hidden{ display:none; }
+
+/* ================================
+   PHASE 2 – ICONS & HISTORY
+   ================================ */
+
+.log-input{
+  display:flex;
+  gap:10px;
+}
+
+.log-input input{
+  flex:1;
+}
+
+.icon-btn{
+  background:var(--surface);
+  border:none;
+  padding:6px;
+  border-radius:var(--r-sm);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--text-muted);
+}
+
+.icon-btn svg{
+  width:16px;
+  height:16px;
+}
+
+.icon-btn.edit:hover{
+  color:var(--peach);
+}
+
+.icon-btn.delete:hover{
+  color:var(--red);
+}
+
+.history-set{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-left:12px;
+}
+
+.set-value{
+  flex:1;
+  font-weight:600;
+}
