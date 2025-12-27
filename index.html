@@ -8,15 +8,11 @@
 </head>
 <body>
 
-<header>
-  <h1>Tracker</h1>
-</header>
-
 <main>
 
   <!-- LOG -->
   <section id="screen-log" class="screen active">
-    <h2>Log</h2>
+    <h1 class="screen-title">Log</h1>
 
     <label>Date</label>
     <input type="date" id="logDate">
@@ -26,40 +22,44 @@
 
     <div id="logEntry"></div>
 
-    <h3>History</h3>
+    <h2 class="section-title">History</h2>
     <div id="logHistory" class="history"></div>
   </section>
 
   <!-- SUMMARY -->
   <section id="screen-summary" class="screen">
-    <h2>Summary</h2>
+    <h1 class="screen-title">Summary</h1>
 
     <div class="row">
       <select id="summaryActivity"></select>
       <select id="summaryRange">
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
+        <option value="daily">Today</option>
+        <option value="weekly">This Week</option>
+        <option value="monthly">This Month</option>
+        <option value="yearly">This Year</option>
         <option value="all">All Time</option>
       </select>
     </div>
 
-    <canvas id="summaryGraph" width="320" height="180"></canvas>
+    <div class="graph-card">
+      <canvas id="summaryGraph" width="320" height="180"></canvas>
+    </div>
 
     <div class="metrics">
-      <div>Total<br><span id="sTotal">0</span></div>
-      <div>Average<br><span id="sAvg">0</span></div>
-      <div>Best Day<br><span id="sBest">0</span></div>
-      <div>Best Set<br><span id="sBestSet">0</span></div>
-      <div>Active Days<br><span id="sActive">0</span></div>
-      <div>Streak<br><span id="sStreak">0</span></div>
+      <div>Total<span id="sTotal">0</span></div>
+      <div>Average<span id="sAvg">0</span></div>
+      <div>Best Day<span id="sBest">0</span></div>
+      <div>Best Set<span id="sBestSet">0</span></div>
+      <div>Active Days<span id="sActive">0</span></div>
+      <div>Streak<span id="sStreak">0</span></div>
     </div>
   </section>
 
   <!-- PROFILE -->
   <section id="screen-profile" class="screen">
-    <h2>Activities</h2>
+    <h1 class="screen-title">Profile</h1>
+
+    <h2 class="section-title">Activities</h2>
 
     <input id="actName" placeholder="Activity name">
 
@@ -91,10 +91,10 @@
     <button id="saveActivity">Save Activity</button>
     <button id="cancelEdit" class="secondary hidden">Cancel</button>
 
-    <h3>Your Activities</h3>
+    <h2 class="section-title">Your Activities</h2>
     <div id="activityList"></div>
 
-    <hr>
+    <h2 class="section-title">Appearance</h2>
     <button id="toggleTheme">Toggle Dark Mode</button>
   </section>
 
