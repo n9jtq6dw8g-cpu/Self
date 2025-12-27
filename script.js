@@ -38,6 +38,7 @@ document.getElementById("saveActivity").onclick=()=>{
   const id=edit||actName.value.toLowerCase().replace(/\s+/g,"_");
   a[id]={id,name:actName.value,unit:actUnit.value,startTime:actStart.value,endTime:actEnd.value,frequency:actFreq.value,days:[...weekdays.querySelectorAll("input:checked")].map(i=>i.value),active:true};
   save(ACT,a);
+  resetActivityForm();
   renderActivities();
 };
 
@@ -257,6 +258,18 @@ END:VCALENDAR`;
   link.href=URL.createObjectURL(blob);
   link.download=a.name+".ics";
   link.click();
+}
+
+function resetActivityForm(){
+  edit = null;
+  actName.value = "";
+  actUnit.value = "count";
+  actStart.value = "";
+  actEnd.value = "";
+  actFreq.value = "daily";
+  weekdays.classList.add("hidden");
+  weekdays.querySelectorAll("input").forEach(i=>i.checked=false);
+  document.getElementById("cancelEdit").classList.add("hidden");
 }
 
 /* INIT */
