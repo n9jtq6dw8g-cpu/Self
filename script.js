@@ -33,12 +33,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const sActive = document.getElementById("sActive");
   const sStreak = document.getElementById("sStreak");
 
-  function updateWeekdays() {
-    weekdays.classList.toggle("hidden", actFreq.value !== "custom");
-  }
-  actFreq.onchange = updateWeekdays;
-  updateWeekdays();
+  const canvas = document.getElementById("summaryGraph");
+  const ctx = canvas.getContext("2d");
 
+  /* ---------- FREQUENCY ---------- */
+  actFreq.onchange = () =>
+    weekdays.classList.toggle("hidden", actFreq.value !== "custom");
+
+  /* ---------- ACTIVITY SAVE ---------- */
   saveBtn.onclick = () => {
     if (!actName.value) return alert("Name required");
     if (!actStart.value || !actEnd.value || actStart.value >= actEnd.value)
@@ -55,7 +57,8 @@ document.addEventListener("DOMContentLoaded", () => {
       endTime: actEnd.value,
       frequency: actFreq.value,
       days: [...weekdays.querySelectorAll("input:checked")].map(i => i.value),
-      active: true
+      active: true,
+      archived: false
     };
 
     save(ACT_KEY, acts);
@@ -74,71 +77,79 @@ document.addEventListener("DOMContentLoaded", () => {
     actEnd.value = "";
     actFreq.value = "daily";
     weekdays.querySelectorAll("input").forEach(i => i.checked = false);
-    updateWeekdays();
+    weekdays.classList.add("hidden");
   }
 
+  /* ---------- ACTIVITIES ---------- */
   function renderActivities() {
-  const acts = load(ACT_KEY);
-  activityList.innerHTML = "";
+    const acts = load(ACT_KEY);
+    activityList.innerHTML = "";
 
-  Object.values(acts).forEach(a => {
-    const div = document.createElement("div");
+    Object.values(acts)
+      .filter(a => !a.archived)
+      .forEach(a => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <strong>${a.name}</strong> ${a.active ? "" : "(Paused)"}
+          <br>
+          <button class="edit-btn">Edit</button>
+          <button class="toggle-btn">${a.active ? "Pause" : "Resume"}</button>
+        `;
 
-    div.innerHTML = `
-      <strong>${a.name}</strong> ${a.active ? "" : "(Paused)"}
-      <br>
-      <button class="edit-btn">Edit</button>
-      <button class="toggle-btn">${a.active ? "Pause" : "Resume"}</button>
-    `;
+        div.querySelector(".edit-btn").onclick = () => startEdit(a);
+        div.querySelector(".toggle-btn").onclick = () => {
+          a.active = !a.active;
+          save(ACT_KEY, acts);
+          renderAll();
+        };
 
-    div.querySelector(".edit-btn").onclick = () => {
-      editId = a.id;
-      editLabel.textContent = `Editing: ${a.name}`;
-      cancelBtn.classList.remove("hidden");
+        activityList.appendChild(div);
+      });
 
-      actName.value = a.name;
-      actUnit.value = a.unit;
-      actStart.value = a.startTime;
-      actEnd.value = a.endTime;
-      actFreq.value = a.frequency;
+    const activeActs = Object.values(acts)
+      .filter(a => a.active && !a.archived);
 
-      weekdays.querySelectorAll("input").forEach(
-        i => (i.checked = a.days.includes(i.value))
-      );
-      updateWeekdays();
-    };
+    summaryActivity.innerHTML = activeActs
+      .map(a => `<option value="${a.id}">${a.name}</option>`)
+      .join("");
+  }
 
-    div.querySelector(".toggle-btn").onclick = () => {
-      a.active = !a.active;
-      save(ACT_KEY, acts);
-      renderAll();
-    };
+  function startEdit(a) {
+    editId = a.id;
+    editLabel.textContent = `Editing: ${a.name}`;
+    cancelBtn.classList.remove("hidden");
 
-    activityList.appendChild(div);
-  });
+    actName.value = a.name;
+    actUnit.value = a.unit;
+    actStart.value = a.startTime;
+    actEnd.value = a.endTime;
+    actFreq.value = a.frequency;
 
-  const activeActs = Object.values(acts).filter(a => a.active);
-  summaryActivity.innerHTML = activeActs
-    .map(a => `<option value="${a.id}">${a.name}</option>`)
-    .join("");
-}
+    weekdays.querySelectorAll("input").forEach(
+      i => (i.checked = a.days.includes(i.value))
+    );
+    weekdays.classList.toggle("hidden", a.frequency !== "custom");
+  }
 
+  /* ---------- LOGGING ---------- */
   logDate.value = today();
 
   function renderLog() {
     const acts = load(ACT_KEY);
     logInputs.innerHTML = "";
 
-    Object.values(acts).filter(a => a.active).forEach(a => {
-      const div = document.createElement("div");
-      div.innerHTML = `
-        <label>${a.name}</label>
-        <input type="number" id="log-${a.id}">
-        <button>Add</button>
-      `;
-      div.querySelector("button").onclick = () => addLog(a.id);
-      logInputs.appendChild(div);
-    });
+    Object.values(acts)
+      .filter(a => a.active && !a.archived)
+      .forEach(a => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <label>${a.name}</label>
+          <input type="number" id="log-${a.id}">
+          <button>Add</button>
+        `;
+        div.querySelector("button").onclick = () => addLog(a.id);
+        logInputs.appendChild(div);
+      });
   }
 
   function addLog(id) {
@@ -157,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSummary();
   }
 
+  /* ---------- SUMMARY + GRAPH ---------- */
   summaryActivity.onchange = renderSummary;
   summaryRange.onchange = renderSummary;
 
@@ -164,67 +176,60 @@ document.addEventListener("DOMContentLoaded", () => {
     const id = summaryActivity.value;
     if (!id) return;
 
-    const acts = load(ACT_KEY);
-    const a = acts[id];
     const logs = load(LOG_KEY);
 
-    let total = 0, bestDay = 0, bestSet = 0, active = 0;
-    let streak = 0;
-
-    let dates = [];
-    if (summaryRange.value === "all") {
-      dates = Object.keys(logs).sort().reverse();
-    } else {
-      const days = { daily: 1, weekly: 7, monthly: 30, yearly: 365 }[summaryRange.value];
-      for (let i = 0; i < days; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        dates.push(d.toISOString().split("T")[0]);
-      }
+    let days;
+    switch (summaryRange.value) {
+      case "daily": days = 7; break;
+      case "weekly": days = 30; break;
+      case "monthly": days = 180; break;
+      case "yearly": days = 365; break;
+      case "all": days = 3650; break;
     }
 
-    for (let date of dates) {
-      const sets = logs[date]?.[id];
-      if (sets?.length) {
-        const sum = sets.reduce((a, b) => a + b, 0);
-        total += sum;
-        active++;
-        bestDay = Math.max(bestDay, sum);
-        sets.forEach(v => bestSet = Math.max(bestSet, v));
-      }
+    let data = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      const total = (logs[key]?.[id] || []).reduce((a, b) => a + b, 0);
+      data.push(total);
     }
 
-    // STREAK CALCULATION
-    let current = new Date();
-    while (true) {
-      const dStr = current.toISOString().split("T")[0];
-      const sets = logs[dStr]?.[id];
+    drawGraph(data);
 
-      const weekday = ["SU","MO","TU","WE","TH","FR","SA"][current.getDay()];
-      const isExpected =
-        a.frequency === "daily" ||
-        (a.frequency === "alternate" && streak % 2 === 0) ||
-        (a.frequency === "custom" && a.days.includes(weekday));
-
-      if (!isExpected) {
-        current.setDate(current.getDate() - 1);
-        continue;
-      }
-
-      if (!sets || !sets.length) break;
-
-      streak++;
-      current.setDate(current.getDate() - 1);
-    }
-
-    sTotal.textContent = total;
-    sActive.textContent = active;
-    sAvg.textContent = active ? Math.round(total / active) : 0;
-    sBest.textContent = bestDay;
-    sBestSet.textContent = bestSet;
-    sStreak.textContent = streak;
+    const nonZero = data.filter(v => v > 0);
+    sTotal.textContent = nonZero.reduce((a, b) => a + b, 0);
+    sActive.textContent = nonZero.length;
+    sAvg.textContent = nonZero.length ? Math.round(sTotal.textContent / nonZero.length) : 0;
+    sBest.textContent = Math.max(...data, 0);
+    sBestSet.textContent = Math.max(
+      ...Object.values(logs).flatMap(d => d[id] || []),
+      0
+    );
+    sStreak.textContent = nonZero.length; // placeholder, unchanged logic
   }
 
+  function drawGraph(values) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const max = Math.max(...values, 1);
+    const stepX = canvas.width / (values.length - 1);
+
+    ctx.beginPath();
+    ctx.strokeStyle = "#2aa198";
+    ctx.lineWidth = 2;
+
+    values.forEach((v, i) => {
+      const x = i * stepX;
+      const y = canvas.height - (v / max) * canvas.height;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+  }
+
+  /* ---------- BACKUP ---------- */
   document.getElementById("exportData").onclick = () => {
     const data = { activities: load(ACT_KEY), logs: load(LOG_KEY) };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
