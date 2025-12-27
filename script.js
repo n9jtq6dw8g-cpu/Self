@@ -1,18 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-const ACT_KEY = "activities";
-const LOG_KEY = "logs";
-
-const load = k => JSON.parse(localStorage.getItem(k)) || {};
-const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const ACT_KEY="activities";
+const LOG_KEY="logs";
+const load=k=>JSON.parse(localStorage.getItem(k))||{};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
 /* NAV */
-const screens = document.querySelectorAll(".screen");
 document.querySelectorAll(".nav-btn").forEach(btn=>{
   btn.onclick=()=>{
     document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
-    screens.forEach(s=>s.classList.remove("active"));
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
     document.getElementById("screen-"+btn.dataset.target).classList.add("active");
     if(btn.dataset.target==="summary") renderSummary();
   };
@@ -23,41 +21,90 @@ const themeBtn=document.getElementById("toggleTheme");
 if(load("theme")==="dark") document.body.classList.add("dark");
 themeBtn.onclick=()=>{
   document.body.classList.toggle("dark");
-  save("theme", document.body.classList.contains("dark")?"dark":"light");
+  save("theme",document.body.classList.contains("dark")?"dark":"light");
 };
 
-/* ACTIVITIES */
-const actName=document.getElementById("actName");
-const actUnit=document.getElementById("actUnit");
-const actStart=document.getElementById("actStart");
-const actEnd=document.getElementById("actEnd");
-const actFreq=document.getElementById("actFreq");
+/* ACTIVITY FORM */
+let editId=null;
+const actName=actUnit=actStart=actEnd=actFreq=null; // ← fixed below
+const actNameEl=document.getElementById("actName");
+const actUnitEl=document.getElementById("actUnit");
+const actStartEl=document.getElementById("actStart");
+const actEndEl=document.getElementById("actEnd");
+const actFreqEl=document.getElementById("actFreq");
 const weekdays=document.getElementById("weekdays");
 const activityList=document.getElementById("activityList");
 
-actFreq.onchange=()=>weekdays.classList.toggle("hidden",actFreq.value!=="custom");
+actFreqEl.onchange=()=>weekdays.classList.toggle("hidden",actFreqEl.value!=="custom");
 
 document.getElementById("saveActivity").onclick=()=>{
-  if(!actName.value) return;
+  if(!actNameEl.value) return;
   const acts=load(ACT_KEY);
-  const id=actName.value.toLowerCase().replace(/\s+/g,"_");
-  acts[id]={id,name:actName.value,unit:actUnit.value,startTime:actStart.value,endTime:actEnd.value,frequency:actFreq.value,days:[...weekdays.querySelectorAll("input:checked")].map(i=>i.value),active:true,archived:false};
+  const id=editId||actNameEl.value.toLowerCase().replace(/\s+/g,"_");
+
+  acts[id]={
+    id,
+    name:actNameEl.value,
+    unit:actUnitEl.value,
+    startTime:actStartEl.value,
+    endTime:actEndEl.value,
+    frequency:actFreqEl.value,
+    days:[...weekdays.querySelectorAll("input:checked")].map(i=>i.value),
+    active:true,
+    archived:false
+  };
   save(ACT_KEY,acts);
+  resetForm();
   renderActivities();
 };
 
+document.getElementById("cancelEdit").onclick=resetForm;
+
+function resetForm(){
+  editId=null;
+  actNameEl.value="";
+  actUnitEl.value="";
+  actStartEl.value="";
+  actEndEl.value="";
+  actFreqEl.value="daily";
+  weekdays.classList.add("hidden");
+  weekdays.querySelectorAll("input").forEach(i=>i.checked=false);
+}
+
+/* ACTIVITIES LIST */
 function renderActivities(){
   const acts=load(ACT_KEY);
   activityList.innerHTML="";
   Object.values(acts).filter(a=>!a.archived).forEach(a=>{
-    const div=document.createElement("div");
-    div.className="card";
-    div.innerHTML=`<strong>${a.name}</strong><br>
-      <button>Add to Calendar</button>`;
-    div.querySelector("button").onclick=()=>exportCalendar(a);
-    activityList.appendChild(div);
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <strong>${a.name}</strong>
+      <div class="row">
+        <button class="edit">Edit</button>
+        <button class="toggle">${a.active?"Pause":"Resume"}</button>
+        <button class="archive">Archive</button>
+        <button class="calendar">Calendar</button>
+      </div>
+    `;
+    c.querySelector(".edit").onclick=()=>startEdit(a);
+    c.querySelector(".toggle").onclick=()=>{a.active=!a.active;save(ACT_KEY,acts);renderActivities();populateSelectors();};
+    c.querySelector(".archive").onclick=()=>{a.archived=true;a.active=false;save(ACT_KEY,acts);renderActivities();populateSelectors();};
+    c.querySelector(".calendar").onclick=()=>exportCalendar(a);
+    activityList.appendChild(c);
   });
   populateSelectors();
+}
+
+function startEdit(a){
+  editId=a.id;
+  actNameEl.value=a.name;
+  actUnitEl.value=a.unit;
+  actStartEl.value=a.startTime;
+  actEndEl.value=a.endTime;
+  actFreqEl.value=a.frequency;
+  weekdays.querySelectorAll("input").forEach(i=>i.checked=a.days.includes(i.value));
+  weekdays.classList.toggle("hidden",a.frequency!=="custom");
 }
 
 /* LOG */
@@ -70,7 +117,8 @@ logDate.value=new Date().toISOString().split("T")[0];
 
 function populateSelectors(){
   const acts=load(ACT_KEY);
-  logActivity.innerHTML=Object.values(acts).filter(a=>a.active&&!a.archived).map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
+  logActivity.innerHTML=Object.values(acts).filter(a=>a.active&&!a.archived)
+    .map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
   document.getElementById("summaryActivity").innerHTML=logActivity.innerHTML;
 }
 
@@ -92,8 +140,7 @@ function renderLogInput(){
 }
 
 function renderHistory(){
-  const logs=load(LOG_KEY);
-  logHistory.innerHTML=JSON.stringify(logs,null,2);
+  logHistory.textContent=JSON.stringify(load(LOG_KEY),null,2);
 }
 
 /* SUMMARY */
@@ -116,7 +163,7 @@ function renderSummary(){
   document.getElementById("sStreak").textContent=0;
 }
 
-/* CALENDAR */
+/* CALENDAR (RRULE) */
 function exportCalendar(a){
   const now=new Date();
   const until=new Date(); until.setDate(until.getDate()+90);
