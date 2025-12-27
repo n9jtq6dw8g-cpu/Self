@@ -221,11 +221,12 @@ function renderSummary(){
   if(!id) return;
 
   const logs=load(LOG_KEY);
+  const acts=load(ACT_KEY);
+  const act=acts[id];
 
+  /* ---------- DAILY TOTALS ---------- */
   const dayTotals=[];
-  const dayKeys=Object.keys(logs).sort();
-
-  dayKeys.forEach(d=>{
+  Object.keys(logs).sort().forEach(d=>{
     if(logs[d][id]){
       dayTotals.push({
         date:d,
@@ -236,15 +237,42 @@ function renderSummary(){
 
   const total=dayTotals.reduce((a,b)=>a+b.total,0);
   const activeDays=dayTotals.length;
-  const bestDay=dayTotals.length?Math.max(...dayTotals.map(d=>d.total)):0;
+  const bestDay=activeDays?Math.max(...dayTotals.map(d=>d.total)):0;
+  const bestSet=Math.max(0,...dayTotals.flatMap(d=>logs[d.date][id]));
 
+  /* ---------- SCHEDULE-AWARE STREAK ---------- */
   let streak=0;
-  for(let i=dayKeys.length-1;i>=0;i--){
-    if(logs[dayKeys[i]]?.[id]) streak++;
-    else if(streak) break;
+  if(act){
+    const loggedDates=new Set(dayTotals.map(d=>d.date));
+    let cursor=new Date();
+    cursor.setHours(0,0,0,0);
+
+    const isScheduledDay=(date)=>{
+      const day=date.toLocaleDateString("en-US",{weekday:"short"});
+      if(act.frequency==="daily") return true;
+      if(act.frequency==="alternate"){
+        const start=new Date(act.createdAt||dayTotals[0]?.date||date);
+        const diff=Math.floor((date-start)/(1000*60*60*24));
+        return diff%2===0;
+      }
+      if(act.frequency==="custom"){
+        return act.days.includes(day);
+      }
+      return false;
+    };
+
+    while(true){
+      const ds=cursor.toISOString().split("T")[0];
+      if(isScheduledDay(cursor)){
+        if(loggedDates.has(ds)) streak++;
+        else break;
+      }
+      cursor.setDate(cursor.getDate()-1);
+    }
   }
 
-  let buckets={};
+  /* ---------- GRAPH BUCKETING ---------- */
+  const buckets={};
   dayTotals.forEach(d=>{
     let key=d.date;
     const dt=new Date(d.date);
@@ -257,10 +285,11 @@ function renderSummary(){
 
   const graphData=Object.values(buckets);
 
+  /* ---------- UI ---------- */
   document.getElementById("sTotal").textContent=total;
   document.getElementById("sAvg").textContent=activeDays?Math.round(total/activeDays):0;
   document.getElementById("sBest").textContent=bestDay;
-  document.getElementById("sBestSet").textContent=Math.max(0,...dayTotals.flatMap(d=>logs[d.date][id]));
+  document.getElementById("sBestSet").textContent=bestSet;
   document.getElementById("sActive").textContent=activeDays;
   document.getElementById("sStreak").textContent=streak;
 
