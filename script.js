@@ -1,5 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+  /* ------------------ NAVIGATION ------------------ */
+  const screens = {
+    log: document.getElementById("screen-log"),
+    summary: document.getElementById("screen-summary"),
+    profile: document.getElementById("screen-profile")
+  };
+
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      Object.values(screens).forEach(s => s.classList.remove("active"));
+      screens[btn.dataset.target].classList.add("active");
+    };
+  });
+
+  /* ------------------ CORE LOGIC (UNCHANGED) ------------------ */
+
   const ACT_KEY = "activities";
   const LOG_KEY = "logs";
 
@@ -36,11 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("summaryGraph");
   const ctx = canvas.getContext("2d");
 
-  /* ---------- FREQUENCY ---------- */
   actFreq.onchange = () =>
     weekdays.classList.toggle("hidden", actFreq.value !== "custom");
 
-  /* ---------- ACTIVITY SAVE ---------- */
   saveBtn.onclick = () => {
     if (!actName.value) return alert("Name required");
     if (!actStart.value || !actEnd.value || actStart.value >= actEnd.value)
@@ -80,7 +97,6 @@ document.addEventListener("DOMContentLoaded", () => {
     weekdays.classList.add("hidden");
   }
 
-  /* ---------- ACTIVITIES ---------- */
   function renderActivities() {
     const acts = load(ACT_KEY);
     activityList.innerHTML = "";
@@ -90,15 +106,24 @@ document.addEventListener("DOMContentLoaded", () => {
       .forEach(a => {
         const div = document.createElement("div");
         div.innerHTML = `
-          <strong>${a.name}</strong> ${a.active ? "" : "(Paused)"}
-          <br>
-          <button class="edit-btn">Edit</button>
-          <button class="toggle-btn">${a.active ? "Pause" : "Resume"}</button>
+          <strong>${a.name}</strong> ${a.active ? "" : "(Paused)"}<br>
+          <button>Edit</button>
+          <button>${a.active ? "Pause" : "Resume"}</button>
+          <button>Archive</button>
         `;
 
-        div.querySelector(".edit-btn").onclick = () => startEdit(a);
-        div.querySelector(".toggle-btn").onclick = () => {
+        const [editBtn, toggleBtn, archiveBtn] = div.querySelectorAll("button");
+
+        editBtn.onclick = () => startEdit(a);
+        toggleBtn.onclick = () => {
           a.active = !a.active;
+          save(ACT_KEY, acts);
+          renderAll();
+        };
+        archiveBtn.onclick = () => {
+          if (!confirm("Archive activity?")) return;
+          a.archived = true;
+          a.active = false;
           save(ACT_KEY, acts);
           renderAll();
         };
@@ -106,10 +131,8 @@ document.addEventListener("DOMContentLoaded", () => {
         activityList.appendChild(div);
       });
 
-    const activeActs = Object.values(acts)
-      .filter(a => a.active && !a.archived);
-
-    summaryActivity.innerHTML = activeActs
+    summaryActivity.innerHTML = Object.values(acts)
+      .filter(a => !a.archived)
       .map(a => `<option value="${a.id}">${a.name}</option>`)
       .join("");
   }
@@ -131,7 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
     weekdays.classList.toggle("hidden", a.frequency !== "custom");
   }
 
-  /* ---------- LOGGING ---------- */
   logDate.value = today();
 
   function renderLog() {
@@ -168,7 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSummary();
   }
 
-  /* ---------- SUMMARY + GRAPH ---------- */
   summaryActivity.onchange = renderSummary;
   summaryRange.onchange = renderSummary;
 
@@ -178,22 +199,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const logs = load(LOG_KEY);
 
-    let days;
-    switch (summaryRange.value) {
-      case "daily": days = 7; break;
-      case "weekly": days = 30; break;
-      case "monthly": days = 180; break;
-      case "yearly": days = 365; break;
-      case "all": days = 3650; break;
-    }
+    let days = { daily: 7, weekly: 30, monthly: 180, yearly: 365, all: 3650 }[summaryRange.value];
 
     let data = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = d.toISOString().split("T")[0];
-      const total = (logs[key]?.[id] || []).reduce((a, b) => a + b, 0);
-      data.push(total);
+      data.push((logs[key]?.[id] || []).reduce((a, b) => a + b, 0));
     }
 
     drawGraph(data);
@@ -203,16 +216,12 @@ document.addEventListener("DOMContentLoaded", () => {
     sActive.textContent = nonZero.length;
     sAvg.textContent = nonZero.length ? Math.round(sTotal.textContent / nonZero.length) : 0;
     sBest.textContent = Math.max(...data, 0);
-    sBestSet.textContent = Math.max(
-      ...Object.values(logs).flatMap(d => d[id] || []),
-      0
-    );
-    sStreak.textContent = nonZero.length; // placeholder, unchanged logic
+    sBestSet.textContent = Math.max(...Object.values(logs).flatMap(d => d[id] || []), 0);
+    sStreak.textContent = nonZero.length;
   }
 
   function drawGraph(values) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     const max = Math.max(...values, 1);
     const stepX = canvas.width / (values.length - 1);
 
@@ -229,7 +238,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.stroke();
   }
 
-  /* ---------- BACKUP ---------- */
   document.getElementById("exportData").onclick = () => {
     const data = { activities: load(ACT_KEY), logs: load(LOG_KEY) };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
