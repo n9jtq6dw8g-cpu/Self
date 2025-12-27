@@ -1,5 +1,14 @@
 document.addEventListener("DOMContentLoaded",()=>{
 
+const archivedToggle=document.getElementById("archivedToggle");
+const archivedList=document.getElementById("archivedActivityList");
+
+if(archivedToggle){
+  archivedToggle.onclick=()=>{
+    archivedList.classList.toggle("collapsed");
+  };
+}
+
 const ACT="activities", LOG="logs";
 const load=k=>JSON.parse(localStorage.getItem(k))||{};
 const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
