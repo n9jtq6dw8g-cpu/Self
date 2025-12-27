@@ -1,74 +1,60 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
 :root{
-  --teal:#8CC7C1;
-  --yellow:#FACA78;
-  --peach:#F57F5B;
-  --red:#DD5341;
-  --brown:#794A3A;
-
   --bg:#FFF6E8;
   --card:#FFFFFF;
   --surface:#FFF1DB;
-
-  --text-main:#4A3A2A;
-  --text-muted:#7A6A58;
-
-  --accent:var(--peach);
-  --border:rgba(0,0,0,0.06);
+  --text:#4A3A2A;
+  --muted:#7A6A58;
+  --accent:#F57F5B;
+  --danger:#DD5341;
+  --border:rgba(0,0,0,.06);
 
   --r-lg:18px;
   --r-md:14px;
   --r-sm:10px;
-
-  --s-lg:20px;
-  --s-md:12px;
-  --s-sm:8px;
 }
 
 body.dark{
   --bg:#2A1E18;
   --card:#3A2A22;
   --surface:#33241E;
-  --text-main:#F6EEDF;
-  --text-muted:#CBBBAA;
-  --border:rgba(255,255,255,0.06);
+  --text:#F6EEDF;
+  --muted:#CBBBAA;
+  --border:rgba(255,255,255,.06);
 }
 
 *{
   box-sizing:border-box;
-  font-family:'Nunito',system-ui,sans-serif;
+  font-family:'Nunito',sans-serif;
 }
 
 body{
   margin:0;
   background:var(--bg);
-  color:var(--text-main);
+  color:var(--text);
 }
 
 .screen{
   display:none;
-  padding:var(--s-lg);
-  padding-bottom: 90px;
+  padding:20px;
+  padding-bottom:90px;
 }
 
-.screen.active{ display:block; }
+.screen.active{display:block;}
 
-/* -------- TITLES -------- */
 .screen-title{
   font-size:28px;
   font-weight:800;
-  margin-bottom:var(--s-md);
+  margin-bottom:12px;
 }
 
 .section-title{
-  font-size:18px;
+  margin:16px 0 6px;
   font-weight:700;
-  margin:18px 0 8px;
-  color:var(--text-muted);
+  color:var(--muted);
 }
 
-/* -------- INPUTS -------- */
 input,select,button{
   width:100%;
   padding:12px 14px;
@@ -76,25 +62,26 @@ input,select,button{
   border-radius:var(--r-md);
   border:1px solid var(--border);
   background:var(--card);
-  color:var(--text-main);
-  font-size:15px;
+  color:var(--text);
 }
 
 button{
   background:var(--accent);
   color:#fff;
-  font-weight:700;
   border:none;
+  font-weight:700;
 }
 
 button.secondary{
   background:var(--surface);
-  color:var(--text-main);
+  color:var(--text);
 }
 
-.row{ display:flex; gap:var(--s-sm); }
+.row{
+  display:flex;
+  gap:10px;
+}
 
-/* -------- GRAPH -------- */
 .graph-card{
   background:var(--card);
   border-radius:var(--r-lg);
@@ -103,63 +90,70 @@ button.secondary{
   border:1px solid var(--border);
 }
 
-/* -------- METRICS -------- */
 .metrics{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:var(--s-md);
+  gap:12px;
 }
 
 .metrics div{
   background:var(--surface);
   border-radius:var(--r-md);
-  padding:14px 10px;
+  padding:12px;
   text-align:center;
   font-weight:700;
 }
 
 .metrics span{
   display:block;
-  margin-top:6px;
   font-size:22px;
   font-weight:800;
+  margin-top:4px;
 }
 
-/* -------- HISTORY (CALM, COLLAPSED READY) -------- */
+.log-input{
+  display:flex;
+  gap:10px;
+}
+
+.log-input input{flex:1;}
+.log-input button{width:auto;}
+
 .history-day{
   background:var(--card);
   border-radius:var(--r-md);
-  padding:10px 12px;
+  padding:10px;
   margin-bottom:10px;
   border:1px solid var(--border);
 }
 
 .history-day strong{
   font-size:14px;
-  color:var(--text-muted);
-}
-
-.history-activity{
-  margin-top:6px;
-  font-weight:700;
+  color:var(--muted);
 }
 
 .history-set{
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:8px;
   margin-left:12px;
-  font-size:14px;
 }
 
-.history-set button{
+.icon-btn{
   background:var(--surface);
-  color:var(--text-main);
-  font-size:12px;
-  padding:4px 6px;
+  border:none;
+  padding:6px;
+  border-radius:var(--r-sm);
+  color:var(--muted);
 }
 
-/* -------- BOTTOM NAV -------- */
+.icon-btn svg{
+  width:16px;
+  height:16px;
+}
+
+.icon-btn.delete{color:var(--danger);}
+
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -173,63 +167,20 @@ button.secondary{
 .nav-btn{
   flex:1;
   padding:14px;
-  font-size:20px;
   background:none;
   border:none;
-  color:var(--text-muted);
+  color:var(--muted);
+  display:flex;
+  justify-content:center;
+}
+
+.nav-btn svg{
+  width:22px;
+  height:22px;
 }
 
 .nav-btn.active{
   color:var(--accent);
 }
 
-.hidden{ display:none; }
-
-/* ================================
-   PHASE 2 – ICONS & HISTORY
-   ================================ */
-
-.log-input{
-  display:flex;
-  gap:10px;
-}
-
-.log-input input{
-  flex:1;
-}
-
-.icon-btn{
-  background:var(--surface);
-  border:none;
-  padding:6px;
-  border-radius:var(--r-sm);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--text-muted);
-}
-
-.icon-btn svg{
-  width:16px;
-  height:16px;
-}
-
-.icon-btn.edit:hover{
-  color:var(--peach);
-}
-
-.icon-btn.delete:hover{
-  color:var(--red);
-}
-
-.history-set{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-left:12px;
-}
-
-.set-value{
-  flex:1;
-  font-weight:600;
-}
+.hidden{display:none;}
