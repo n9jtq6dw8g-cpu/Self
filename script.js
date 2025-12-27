@@ -51,30 +51,86 @@ document.getElementById("saveActivity").onclick=()=>{
   renderActivities();
 };
 
-const archivedList = document.getElementById("archivedActivityList");
-archivedList.innerHTML = "";
-
 function renderActivities(){
   const acts = load(ACT);
   list.innerHTML = "";
+  archivedList.innerHTML = "";
 
   Object.values(acts).forEach(a=>{
+
+    /* ARCHIVED */
     if(a.archived){
-  const arc=document.createElement("div");
-  arc.className="card paused";
-  arc.innerHTML=`
-    <strong>${a.name}</strong> (${a.unit})
-    <div class="row" style="margin-top:6px;">
-      <button class="secondary unarchive-btn">Unarchive</button>
-    </div>
-  `;
-  arc.querySelector(".unarchive-btn").onclick=()=>{
-    a.archived=false;
-    a.active=true;
-    save(ACT,acts);
-    renderActivities();
-    populate();
-  };
+      const arc=document.createElement("div");
+      arc.className="card paused";
+      arc.innerHTML=`
+        <strong>${a.name}</strong> (${a.unit})
+        <div class="row" style="margin-top:6px;">
+          <button class="secondary unarchive-btn">Unarchive</button>
+        </div>
+      `;
+      arc.querySelector(".unarchive-btn").onclick=()=>{
+        a.archived=false;
+        a.active=true;
+        save(ACT,acts);
+        renderActivities();
+        populate();
+      };
+      archivedList.appendChild(arc);
+      return;
+    }
+
+    /* ACTIVE / PAUSED */
+    const card=document.createElement("div");
+    card.className="card"+(a.active?"":" paused");
+
+    card.innerHTML=`
+      <strong>${a.name}</strong> (${a.unit})
+      <div class="row" style="margin-top:8px;">
+        <button class="secondary edit-btn">Edit</button>
+        <button class="secondary toggle-btn">${a.active?"Pause":"Resume"}</button>
+        <button class="secondary archive-btn">Archive</button>
+        <button class="secondary cal-btn">Calendar</button>
+      </div>
+    `;
+
+    card.querySelector(".edit-btn").onclick=()=>{
+      edit=a.id;
+      actName.value=a.name;
+      actUnit.value=a.unit;
+      actStart.value=a.startTime||"";
+      actEnd.value=a.endTime||"";
+      actFreq.value=a.frequency||"daily";
+      weekdays.classList.toggle("hidden",a.frequency!=="custom");
+      weekdays.querySelectorAll("input").forEach(i=>{
+        i.checked=a.days?.includes(i.value);
+      });
+      document.getElementById("cancelEdit").classList.remove("hidden");
+    };
+
+    card.querySelector(".toggle-btn").onclick=()=>{
+      a.active=!a.active;
+      save(ACT,acts);
+      renderActivities();
+      populate();
+    };
+
+    card.querySelector(".archive-btn").onclick=()=>{
+      a.archived=true;
+      a.active=false;
+      save(ACT,acts);
+      renderActivities();
+      populate();
+    };
+
+    card.querySelector(".cal-btn").onclick=()=>{
+      exportCalendar(a);
+    };
+
+    list.appendChild(card);
+  });
+
+  populate();
+}
   archivedList.appendChild(arc);
   return;
 }
@@ -228,12 +284,12 @@ function renderSummary(){
   document.getElementById("sStreak").textContent=days.length;
 
   ctx.clearRect(0,0,320,180);
-  if(!data.length) return;
+  if(!days.length) return;
 
-  const max=Math.max(...data,1);
+  const max=Math.max(...days,1);
 
   ctx.beginPath();
-  data.forEach((v,i)=>{
+  days.forEach((v,i)=>{
     const x=i*(320/(data.length-1||1));
     const y=180-(v/max)*150-10;
     i?ctx.lineTo(x,y):ctx.moveTo(x,y);
