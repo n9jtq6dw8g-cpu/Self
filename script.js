@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const ACT_KEY = "activities";
   const LOG_KEY = "logs";
+
   let editId = null;
 
   const load = k => JSON.parse(localStorage.getItem(k)) || {};
@@ -15,14 +16,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const actFreq = document.getElementById("actFreq");
   const weekdays = document.getElementById("weekdays");
   const saveBtn = document.getElementById("saveActivity");
+  const cancelBtn = document.getElementById("cancelEdit");
+  const editLabel = document.getElementById("editLabel");
 
   const activityList = document.getElementById("activityList");
   const logDate = document.getElementById("logDate");
   const logInputs = document.getElementById("logInputs");
-
-  const logViewActivity = document.getElementById("logViewActivity");
-  const logViewDate = document.getElementById("logViewDate");
-  const logViewer = document.getElementById("logViewer");
 
   const summaryActivity = document.getElementById("summaryActivity");
   const summaryRange = document.getElementById("summaryRange");
@@ -32,15 +31,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const sBest = document.getElementById("sBest");
   const sBestSet = document.getElementById("sBestSet");
   const sActive = document.getElementById("sActive");
+  const sStreak = document.getElementById("sStreak");
 
-  /* ---------- FREQUENCY ---------- */
   function updateWeekdays() {
     weekdays.classList.toggle("hidden", actFreq.value !== "custom");
   }
   actFreq.onchange = updateWeekdays;
   updateWeekdays();
 
-  /* ---------- ACTIVITIES ---------- */
   saveBtn.onclick = () => {
     if (!actName.value) return alert("Name required");
     if (!actStart.value || !actEnd.value || actStart.value >= actEnd.value)
@@ -65,8 +63,12 @@ document.addEventListener("DOMContentLoaded", () => {
     renderAll();
   };
 
+  cancelBtn.onclick = resetForm;
+
   function resetForm() {
     editId = null;
+    editLabel.textContent = "";
+    cancelBtn.classList.add("hidden");
     actName.value = "";
     actStart.value = "";
     actEnd.value = "";
@@ -82,46 +84,50 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.values(acts).forEach(a => {
       const div = document.createElement("div");
       div.innerHTML = `
-        <strong>${a.name}</strong> (${a.startTime}–${a.endTime})
+        <strong>${a.name}</strong>
+        ${a.active ? "" : "(Paused)"}
         <br>
-        <button>Export Calendar</button>
+        <button>Edit</button>
+        <button>${a.active ? "Pause" : "Resume"}</button>
       `;
-      div.querySelector("strong").onclick = () => loadForEdit(a.id);
-      div.querySelector("button").onclick = () => exportCalendar(a.id);
+
+      div.querySelector("button:nth-child(3)").onclick = () => {
+        a.active = !a.active;
+        save(ACT_KEY, acts);
+        renderAll();
+      };
+
+      div.querySelector("button:nth-child(2)").onclick = () => {
+        editId = a.id;
+        editLabel.textContent = `Editing: ${a.name}`;
+        cancelBtn.classList.remove("hidden");
+        actName.value = a.name;
+        actUnit.value = a.unit;
+        actStart.value = a.startTime;
+        actEnd.value = a.endTime;
+        actFreq.value = a.frequency;
+        weekdays.querySelectorAll("input").forEach(
+          i => (i.checked = a.days.includes(i.value))
+        );
+        updateWeekdays();
+      };
+
       activityList.appendChild(div);
     });
 
-    const options = Object.values(acts)
+    const activeActs = Object.values(acts).filter(a => a.active);
+    summaryActivity.innerHTML = activeActs
       .map(a => `<option value="${a.id}">${a.name}</option>`)
       .join("");
-
-    summaryActivity.innerHTML = options;
-    logViewActivity.innerHTML = options;
   }
 
-  function loadForEdit(id) {
-    const a = load(ACT_KEY)[id];
-    editId = id;
-    actName.value = a.name;
-    actUnit.value = a.unit;
-    actStart.value = a.startTime;
-    actEnd.value = a.endTime;
-    actFreq.value = a.frequency;
-    weekdays.querySelectorAll("input").forEach(
-      i => (i.checked = a.days.includes(i.value))
-    );
-    updateWeekdays();
-  }
-
-  /* ---------- LOGGING ---------- */
   logDate.value = today();
-  logViewDate.value = today();
 
   function renderLog() {
     const acts = load(ACT_KEY);
     logInputs.innerHTML = "";
 
-    Object.values(acts).forEach(a => {
+    Object.values(acts).filter(a => a.active).forEach(a => {
       const div = document.createElement("div");
       div.innerHTML = `
         <label>${a.name}</label>
@@ -147,52 +153,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     input.value = "";
     renderSummary();
-    renderLogViewer();
   }
 
-  /* ---------- LOG VIEWER ---------- */
-  logViewActivity.onchange = renderLogViewer;
-  logViewDate.onchange = renderLogViewer;
-
-  function renderLogViewer() {
-    const logs = load(LOG_KEY);
-    const d = logViewDate.value;
-    const id = logViewActivity.value;
-
-    logViewer.innerHTML = "";
-    const sets = logs[d]?.[id] || [];
-
-    sets.forEach((val, idx) => {
-      const row = document.createElement("div");
-      row.className = "log-row";
-
-      const input = document.createElement("input");
-      input.type = "number";
-      input.value = val;
-
-      const saveBtn = document.createElement("button");
-      saveBtn.textContent = "Save";
-      saveBtn.onclick = () => {
-        sets[idx] = Number(input.value);
-        save(LOG_KEY, logs);
-        renderSummary();
-      };
-
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "Delete";
-      delBtn.onclick = () => {
-        sets.splice(idx, 1);
-        save(LOG_KEY, logs);
-        renderLogViewer();
-        renderSummary();
-      };
-
-      row.append(input, saveBtn, delBtn);
-      logViewer.appendChild(row);
-    });
-  }
-
-  /* ---------- SUMMARY ---------- */
   summaryActivity.onchange = renderSummary;
   summaryRange.onchange = renderSummary;
 
@@ -200,16 +162,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const id = summaryActivity.value;
     if (!id) return;
 
-    const range = summaryRange.value;
+    const acts = load(ACT_KEY);
+    const a = acts[id];
     const logs = load(LOG_KEY);
 
-    let dates = [];
     let total = 0, bestDay = 0, bestSet = 0, active = 0;
+    let streak = 0;
 
-    if (range === "all") {
-      dates = Object.keys(logs);
+    let dates = [];
+    if (summaryRange.value === "all") {
+      dates = Object.keys(logs).sort().reverse();
     } else {
-      const days = { daily: 1, weekly: 7, monthly: 30, yearly: 365 }[range];
+      const days = { daily: 1, weekly: 7, monthly: 30, yearly: 365 }[summaryRange.value];
       for (let i = 0; i < days; i++) {
         const d = new Date();
         d.setDate(d.getDate() - i);
@@ -217,100 +181,73 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    dates.forEach(date => {
+    for (let date of dates) {
       const sets = logs[date]?.[id];
-      if (!sets || !sets.length) return;
+      if (sets?.length) {
+        const sum = sets.reduce((a, b) => a + b, 0);
+        total += sum;
+        active++;
+        bestDay = Math.max(bestDay, sum);
+        sets.forEach(v => bestSet = Math.max(bestSet, v));
+      }
+    }
 
-      const dayTotal = sets.reduce((a, b) => a + b, 0);
-      total += dayTotal;
-      active++;
-      bestDay = Math.max(bestDay, dayTotal);
-      sets.forEach(v => bestSet = Math.max(bestSet, v));
-    });
+    // STREAK CALCULATION
+    let current = new Date();
+    while (true) {
+      const dStr = current.toISOString().split("T")[0];
+      const sets = logs[dStr]?.[id];
+
+      const weekday = ["SU","MO","TU","WE","TH","FR","SA"][current.getDay()];
+      const isExpected =
+        a.frequency === "daily" ||
+        (a.frequency === "alternate" && streak % 2 === 0) ||
+        (a.frequency === "custom" && a.days.includes(weekday));
+
+      if (!isExpected) {
+        current.setDate(current.getDate() - 1);
+        continue;
+      }
+
+      if (!sets || !sets.length) break;
+
+      streak++;
+      current.setDate(current.getDate() - 1);
+    }
 
     sTotal.textContent = total;
     sActive.textContent = active;
     sAvg.textContent = active ? Math.round(total / active) : 0;
     sBest.textContent = bestDay;
     sBestSet.textContent = bestSet;
+    sStreak.textContent = streak;
   }
 
-  /* ---------- CALENDAR EXPORT ---------- */
-  function exportCalendar(id) {
-    const a = load(ACT_KEY)[id];
-    if (!a) return;
-
-    const now = new Date();
-    const start = new Date();
-    const end = new Date();
-
-    const [sh, sm] = a.startTime.split(":");
-    const [eh, em] = a.endTime.split(":");
-
-    start.setHours(sh, sm, 0);
-    end.setHours(eh, em, 0);
-
-    const until = new Date(start);
-    until.setMonth(until.getMonth() + 3);
-
-    const fmt = d => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-
-    let rrule = "FREQ=DAILY";
-    if (a.frequency === "alternate") rrule += ";INTERVAL=2";
-    if (a.frequency === "custom" && a.days.length)
-      rrule += ";BYDAY=" + a.days.join(",");
-    rrule += ";UNTIL=" + fmt(until);
-
-    const ics = `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-UID:${id}-${Date.now()}
-DTSTAMP:${fmt(now)}
-DTSTART:${fmt(start)}
-DTEND:${fmt(end)}
-RRULE:${rrule}
-SUMMARY:${a.name} (Health Tracker)
-END:VEVENT
-END:VCALENDAR`;
-
-    const blob = new Blob([ics], { type: "text/calendar" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${a.name}.ics`;
-    link.click();
-  }
-
-  /* ---------- BACKUP ---------- */
   document.getElementById("exportData").onclick = () => {
-    const data = {
-      activities: load(ACT_KEY),
-      logs: load(LOG_KEY)
-    };
+    const data = { activities: load(ACT_KEY), logs: load(LOG_KEY) };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "health-tracker-backup.json";
-    link.click();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "health-tracker-backup.json";
+    a.click();
   };
 
   document.getElementById("importData").onchange = e => {
     const file = e.target.files[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const data = JSON.parse(reader.result);
+    const r = new FileReader();
+    r.onload = () => {
+      const data = JSON.parse(r.result);
       save(ACT_KEY, data.activities || {});
       save(LOG_KEY, data.logs || {});
       renderAll();
     };
-    reader.readAsText(file);
+    r.readAsText(file);
   };
 
   function renderAll() {
     renderActivities();
     renderLog();
-    renderLogViewer();
     renderSummary();
   }
 
