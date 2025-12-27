@@ -41,12 +41,21 @@ document.getElementById("saveActivity").onclick=()=>{
   renderActivities();
 };
 
+const archivedList = document.getElementById("archivedActivityList");
+archivedList.innerHTML = "";
+
 function renderActivities(){
   const acts = load(ACT);
   list.innerHTML = "";
 
   Object.values(acts).forEach(a=>{
-    if(a.archived) return;
+    if(a.archived){
+  const arc=document.createElement("div");
+  arc.className="card paused";
+  arc.innerHTML=`<strong>${a.name}</strong> (${a.unit})`;
+  archivedList.appendChild(arc);
+  return;
+}
 
     const card = document.createElement("div");
     card.className = "card" + (a.active ? "" : " paused");
