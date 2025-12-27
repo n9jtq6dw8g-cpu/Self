@@ -1,46 +1,25 @@
 const ACT_KEY = "activities";
 const LOG_KEY = "logs";
-const THEME_KEY = "theme";
 
 let editId = null;
-let currentRange = "weekly";
-const ranges = { daily: 7, weekly: 7, monthly: 30, yearly: 365 };
 
-const chart = document.getElementById("chart");
-
-/* ---------- UTIL ---------- */
-const today = () => new Date().toISOString().split("T")[0];
+/* ---------- utils ---------- */
 const load = k => JSON.parse(localStorage.getItem(k)) || {};
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const today = () => new Date().toISOString().split("T")[0];
 
-/* ---------- THEME ---------- */
-const themeToggle = document.getElementById("themeToggle");
-if (localStorage.getItem(THEME_KEY) === "true") document.body.classList.add("dark");
-themeToggle.onclick = () => {
-  document.body.classList.toggle("dark");
-  localStorage.setItem(THEME_KEY, document.body.classList.contains("dark"));
-};
-
-/* ---------- NAV ---------- */
-document.querySelectorAll(".bottom-nav button").forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll(".tab, .bottom-nav button").forEach(x => x.classList.remove("active"));
-    document.getElementById(b.dataset.tab).classList.add("active");
-    b.classList.add("active");
-  };
-});
-
-/* ---------- FREQUENCY ---------- */
+/* ---------- frequency ---------- */
 const actFreq = document.getElementById("actFreq");
 const weekdays = document.getElementById("weekdays");
-const updateWeekdays = () => {
+
+function updateWeekdays() {
   weekdays.classList.toggle("hidden", actFreq.value !== "custom");
-};
+}
 actFreq.onchange = updateWeekdays;
 updateWeekdays();
 
-/* ---------- ACTIVITY ---------- */
-function saveActivity() {
+/* ---------- activities ---------- */
+document.getElementById("saveActivity").onclick = () => {
   if (!actName.value) return alert("Name required");
   if (!actStart.value || !actEnd.value || actStart.value >= actEnd.value)
     return alert("Invalid time");
@@ -52,7 +31,6 @@ function saveActivity() {
     id,
     name: actName.value,
     unit: actUnit.value,
-    goal: Number(actGoal.value),
     startTime: actStart.value,
     endTime: actEnd.value,
     frequency: actFreq.value,
@@ -63,16 +41,11 @@ function saveActivity() {
   save(ACT_KEY, acts);
   resetForm();
   renderAll();
-}
-
-saveActivityBtn.onclick = saveActivity;
+};
 
 function resetForm() {
   editId = null;
-  activityFormTitle.textContent = "Add Activity";
-  saveActivityBtn.textContent = "Save Activity";
   actName.value = "";
-  actGoal.value = "";
   actStart.value = "";
   actEnd.value = "";
   actFreq.value = "daily";
@@ -85,12 +58,10 @@ function renderActivities() {
   activityList.innerHTML = "";
 
   Object.values(acts).forEach(a => {
-    activityList.innerHTML += `
-      <div>
-        <strong>${a.name}</strong><br/>
-        ${a.startTime}–${a.endTime}
-      </div>
-    `;
+    const div = document.createElement("div");
+    div.innerHTML = `<strong>${a.name}</strong> (${a.startTime}–${a.endTime})`;
+    div.onclick = () => loadForEdit(a.id);
+    activityList.appendChild(div);
   });
 
   summaryActivity.innerHTML = Object.values(acts)
@@ -98,24 +69,41 @@ function renderActivities() {
     .join("");
 }
 
-/* ---------- LOG ---------- */
+function loadForEdit(id) {
+  const a = load(ACT_KEY)[id];
+  editId = id;
+  actName.value = a.name;
+  actUnit.value = a.unit;
+  actStart.value = a.startTime;
+  actEnd.value = a.endTime;
+  actFreq.value = a.frequency;
+  weekdays.querySelectorAll("input").forEach(
+    i => (i.checked = a.days.includes(i.value))
+  );
+  updateWeekdays();
+}
+
+/* ---------- log ---------- */
 logDate.value = today();
 
-function renderLogInputs() {
+function renderLog() {
   const acts = load(ACT_KEY);
   logInputs.innerHTML = "";
 
   Object.values(acts).forEach(a => {
-    logInputs.innerHTML += `
+    const div = document.createElement("div");
+    div.innerHTML = `
       <label>${a.name}</label>
-      <input type="number" id="input-${a.id}">
-      <button onclick="addSet('${a.id}')">Add</button>
+      <input type="number" id="log-${a.id}">
+      <button>Add</button>
     `;
+    div.querySelector("button").onclick = () => addLog(a.id);
+    logInputs.appendChild(div);
   });
 }
 
-function addSet(id) {
-  const input = document.getElementById(`input-${id}`);
+function addLog(id) {
+  const input = document.getElementById(`log-${id}`);
   const v = Number(input.value);
   if (!v) return;
 
@@ -129,75 +117,44 @@ function addSet(id) {
   renderSummary();
 }
 
-/* ---------- SUMMARY ---------- */
-rangeBtn.onclick = () => rangeMenu.classList.toggle("hidden");
-rangeMenu.querySelectorAll("div").forEach(d => {
-  d.onclick = () => {
-    currentRange = d.dataset.range;
-    rangeMenu.classList.add("hidden");
-    renderSummary();
-  };
-});
-
+/* ---------- summary ---------- */
 function renderSummary() {
   const id = summaryActivity.value;
   if (!id) return;
 
+  const range = summaryRange.value;
   const logs = load(LOG_KEY);
-  const days = ranges[currentRange];
-  const data = [];
+  const days = { daily: 1, weekly: 7, monthly: 30, yearly: 365 }[range];
 
-  for (let i = days - 1; i >= 0; i--) {
+  let total = 0;
+  let best = 0;
+  let active = 0;
+
+  for (let i = 0; i < days; i++) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const key = d.toISOString().split("T")[0];
-    const sets = logs[key]?.[id] || [];
-    data.push(sets.reduce((a, b) => a + b, 0));
+    const sum = (logs[key]?.[id] || []).reduce((a, b) => a + b, 0);
+    if (sum > 0) {
+      total += sum;
+      active++;
+      best = Math.max(best, sum);
+    }
   }
 
-  drawGraph(data);
-  updateMetrics(data);
+  sTotal.textContent = total;
+  sActive.textContent = active;
+  sAvg.textContent = active ? Math.round(total / active) : 0;
+  sBest.textContent = best;
 }
 
-/* ---------- GRAPH ---------- */
-function drawGraph(data) {
-  const ctx = chart.getContext("2d");
-  const dpr = window.devicePixelRatio || 1;
+summaryActivity.onchange = renderSummary;
+summaryRange.onchange = renderSummary;
 
-  const w = chart.clientWidth;
-  const h = chart.clientHeight;
-  chart.width = w * dpr;
-  chart.height = h * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, w, h);
-
-  const pad = 36;
-  const max = Math.max(...data, 1);
-
-  ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--accent");
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-
-  data.forEach((v, i) => {
-    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
-    const y = h - pad - (v / max) * (h - pad * 2);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-}
-
-function updateMetrics(data) {
-  mTotal.textContent = data.reduce((a, b) => a + b, 0);
-  const active = data.filter(v => v > 0).length;
-  mAvg.textContent = active ? Math.round(mTotal.textContent / active) : 0;
-  mBest.textContent = Math.max(...data);
-  mActive.textContent = active;
-}
-
-/* ---------- INIT ---------- */
+/* ---------- init ---------- */
 function renderAll() {
   renderActivities();
-  renderLogInputs();
+  renderLog();
   renderSummary();
 }
 renderAll();
