@@ -178,22 +178,54 @@ function renderEntry(){
 }
 
 function renderHistory(){
-  const l=load(LOG), a=load(ACT);
-  hist.innerHTML="";
+  const l = load(LOG);
+  const a = load(ACT);
+  hist.innerHTML = "";
+
   Object.keys(l).sort().reverse().forEach(d=>{
-    const day=document.createElement("div");
-    day.className="history-day";
-    day.innerHTML=`<strong>${formatHistoryDate(d)}</strong>`;
+    const day = document.createElement("div");
+    day.className = "history-day";
+    day.innerHTML = `<strong>${formatHistoryDate(d)}</strong>`;
+
     Object.keys(l[d]).forEach(id=>{
-      l[d][id].forEach(v=>{
-        const s=document.createElement("div");
-        s.className="history-set";
-        s.innerHTML=`<span>${v} ${a[id]?.unit||""}</span>
-          <button class="icon-btn"><svg><use xlink:href="#icon-edit"/></svg></button>
-          <button class="icon-btn delete"><svg><use xlink:href="#icon-delete"/></svg></button>`;
+      l[d][id].forEach((v, idx)=>{
+        const s = document.createElement("div");
+        s.className = "history-set";
+        s.innerHTML = `
+          <span>${v} ${a[id]?.unit || ""}</span>
+          <button class="icon-btn edit">
+            <svg><use xlink:href="#icon-edit"/></svg>
+          </button>
+          <button class="icon-btn delete">
+            <svg><use xlink:href="#icon-delete"/></svg>
+          </button>
+        `;
+
+        /* EDIT */
+        s.querySelector(".edit").onclick = ()=>{
+          const nv = prompt("Edit value", v);
+          if(nv === null || nv === "") return;
+          l[d][id][idx] = +nv;
+          save(LOG, l);
+          renderHistory();
+          renderSummary();
+        };
+
+        /* DELETE */
+        s.querySelector(".delete").onclick = ()=>{
+          if(!confirm("Delete this entry?")) return;
+          l[d][id].splice(idx,1);
+          if(l[d][id].length === 0) delete l[d][id];
+          if(Object.keys(l[d]).length === 0) delete l[d];
+          save(LOG, l);
+          renderHistory();
+          renderSummary();
+        };
+
         day.appendChild(s);
       });
     });
+
     hist.appendChild(day);
   });
 }
@@ -214,22 +246,73 @@ function renderSummary(){
   if(range==="yearly") start=new Date(now.getFullYear(),0,1);
   if(range==="all") start=new Date("1970-01-01");
 
-  let days=[],sets=[];
-  Object.keys(l).forEach(d=>{
-    const dt=new Date(d);
-    if(dt>=start && l[d][id]){
-      const sum=l[d][id].reduce((a,b)=>a+b,0);
-      days.push(sum);
+let data = [];
+let sets = [];
+
+Object.keys(l)
+  .sort()
+  .forEach(d=>{
+    const dt = new Date(d);
+    if(dt >= start && l[d][id]){
+      const sum = l[d][id].reduce((a,b)=>a+b,0);
+      data.push({ date:d, value:sum });
       l[d][id].forEach(v=>sets.push(v));
     }
   });
+
+const values = data.map(x=>x.value);
+
+document.getElementById("sTotal").textContent =
+  values.reduce((a,b)=>a+b,0);
+
+document.getElementById("sAvg").textContent =
+  values.length ? Math.round(values.reduce((a,b)=>a+b,0)/values.length) : 0;
+
+document.getElementById("sBest").textContent =
+  Math.max(0, ...values);
+
+document.getElementById("sBestSet").textContent =
+  Math.max(0, ...sets);
+
+document.getElementById("sActive").textContent =
+  values.length;
+
+document.getElementById("sStreak").textContent =
+  calculateStreak(l, id);
+
+/* DRAW GRAPH */
+ctx.clearRect(0,0,320,180);
+if(values.length === 0) return;
+
+const max = Math.max(...values, 1);
+const step = values.length > 1 ? 320 / (values.length - 1) : 160;
+
+ctx.beginPath();
+values.forEach((v,i)=>{
+  const x = i * step;
+  const y = 170 - (v / max) * 140;
+  i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+});
+ctx.strokeStyle = "#F57F5B";
+ctx.lineWidth = 2;
+ctx.stroke();
+
+/* DOTS */
+values.forEach((v,i)=>{
+  const x = i * step;
+  const y = 170 - (v / max) * 140;
+  ctx.beginPath();
+  ctx.arc(x, y, 3, 0, Math.PI * 2);
+  ctx.fillStyle = "#F57F5B";
+  ctx.fill();
+});
 
   document.getElementById("sTotal").textContent=days.reduce((a,b)=>a+b,0);
   document.getElementById("sAvg").textContent=days.length?Math.round(days.reduce((a,b)=>a+b,0)/days.length):0;
   document.getElementById("sBest").textContent=Math.max(0,...days);
   document.getElementById("sBestSet").textContent=Math.max(0,...sets);
   document.getElementById("sActive").textContent=days.length;
-  document.getElementById("sStreak").textContent=days.length;
+  document.getElementById("sStreak").textContent=calculateStreak(l, id);
 
   ctx.clearRect(0,0,320,180);
   if(!days.length) return;
@@ -325,6 +408,23 @@ function formatHistoryDate(d){
     month:"short",
     year:"numeric"
   });
+}
+
+function calculateStreak(logs, activityId){
+  let streak = 0;
+  const d = new Date();
+  d.setHours(0,0,0,0);
+
+  while(true){
+    const key = d.toISOString().split("T")[0];
+    if(logs[key] && logs[key][activityId]?.length){
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }else{
+      break;
+    }
+  }
+  return streak;
 }
 
 /* INIT */
