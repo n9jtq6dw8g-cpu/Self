@@ -53,9 +53,22 @@ function renderActivities(){
     if(a.archived){
   const arc=document.createElement("div");
   arc.className="card paused";
-  arc.innerHTML=`<strong>${a.name}</strong> (${a.unit})`;
+  arc.innerHTML=`
+    <strong>${a.name}</strong> (${a.unit})
+    <div class="row" style="margin-top:6px;">
+      <button class="secondary unarchive-btn">Unarchive</button>
+    </div>
+  `;
+  arc.querySelector(".unarchive-btn").onclick=()=>{
+    a.archived=false;
+    a.active=true;
+    save(ACT,acts);
+    renderActivities();
+    populate();
+  };
   archivedList.appendChild(arc);
   return;
+}
 }
 
     const card = document.createElement("div");
