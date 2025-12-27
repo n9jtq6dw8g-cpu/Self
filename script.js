@@ -26,12 +26,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= SVG ICON SYSTEM ================= */
   const ICONS = {
-    skip: `<svg viewBox="0 0 24 24"><path d="M6 2c-2 2-2 6 0 8m12-8c2 2 2 6 0 8M4 14c4 4 12 4 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-    rope: `<svg viewBox="0 0 24 24"><path d="M6 2c-2 2-2 6 0 8m12-8c2 2 2 6 0 8M4 14c4 4 12 4 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-    water: `<svg viewBox="0 0 24 24"><path d="M12 2v20m-6-6c0 4 12 4 12 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
-    run: `<svg viewBox="0 0 24 24"><path d="M5 15l4-4 3 2 4-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
-    push: `<svg viewBox="0 0 24 24"><path d="M4 14h16M6 18h12" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
-    default: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>`
+    skip: `
+      <svg viewBox="0 0 24 24">
+        <path d="M4 14c4-8 12-8 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="4" cy="14" r="2" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="20" cy="14" r="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    `,
+    water: `
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"
+          fill="none" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    `,
+    run: `
+      <svg viewBox="0 0 24 24">
+        <path d="M13 5a2 2 0 1 1-4 0a2 2 0 0 1 4 0zM6 21l2-6 3-2 2 2 3-1 2 5"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    `,
+    push: `
+      <svg viewBox="0 0 24 24">
+        <path d="M4 14h16M6 18h12"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    `,
+    default: `
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="6"
+          fill="none" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    `
   };
 
   function getIcon(name) {
@@ -286,14 +311,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const days = daysMap[summaryRange.value];
 
     let data = [];
+    let allSets = [];
+    let activeDays = 0;
+
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = d.toISOString().split("T")[0];
-      data.push((logs[key]?.[id] || []).reduce((a, b) => a + b, 0));
+
+      const sets = logs[key]?.[id] || [];
+      const totalForDay = sets.reduce((a,b)=>a+b,0);
+
+      data.push(totalForDay);
+
+      if (sets.length > 0) {
+        activeDays++;
+        allSets.push(...sets);
+      }
     }
 
     drawGraph(data);
+
+    const total = data.reduce((a,b)=>a+b,0);
+    const bestDay = Math.max(...data, 0);
+    const bestSet = allSets.length ? Math.max(...allSets) : 0;
+    const avg = activeDays ? Math.round(total / activeDays) : 0;
+
+    document.getElementById("sTotal").textContent = total;
+    document.getElementById("sAvg").textContent = avg;
+    document.getElementById("sBest").textContent = bestDay;
+    document.getElementById("sBestSet").textContent = bestSet;
+    document.getElementById("sActive").textContent = activeDays;
+
+    let streak = 0;
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (data[i] > 0) streak++;
+      else break;
+    }
+    document.getElementById("sStreak").textContent = streak;
   }
 
   function drawGraph(values) {
