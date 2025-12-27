@@ -4,7 +4,7 @@ body {
 }
 
 section {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .row {
@@ -17,9 +17,20 @@ section {
 }
 
 button {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
-.summary div {
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 6px;
+}
+
+.log-row input {
+  width: 80px;
+}
+
+.log-row button {
+  padding: 4px 8px;
 }
