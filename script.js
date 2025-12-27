@@ -1,3 +1,5 @@
+console.log("JS booted");
+
 document.addEventListener("DOMContentLoaded",()=>{
 
 const archivedToggle=document.getElementById("archivedToggle");
@@ -30,7 +32,7 @@ document.getElementById("toggleTheme").onclick=()=>{
 };
 
 /* ACTIVITIES */
-const actName=actNameEl=document.getElementById("actName");
+const actName = document.getElementById("actName");
 const actUnit=document.getElementById("actUnit");
 const actStart=document.getElementById("actStart");
 const actEnd=document.getElementById("actEnd");
@@ -205,9 +207,21 @@ const entry=document.getElementById("logEntry");
 const hist=document.getElementById("logHistory");
 
 function populate(){
+  const sel=document.getElementById("logActivity");
+  const summarySel=document.getElementById("summaryActivity");
+  if(!sel || !summarySel) return;
+
   const a=load(ACT);
-  sel.innerHTML=Object.values(a).map(x=>`<option value="${x.id}">${x.name}</option>`).join("");
-  document.getElementById("summaryActivity").innerHTML=sel.innerHTML;
+  sel.innerHTML=Object.values(a)
+    .filter(x=>x.active && !x.archived)
+    .map(x=>`<option value="${x.id}">${x.name}</option>`)
+    .join("");
+
+  summarySel.innerHTML=Object.values(a)
+    .filter(x=>!x.archived)
+    .map(x=>`<option value="${x.id}">${x.name}</option>`)
+    .join("");
+
   renderEntry();
 }
 
@@ -290,7 +304,7 @@ function renderSummary(){
 
   ctx.beginPath();
   days.forEach((v,i)=>{
-    const x=i*(320/(data.length-1||1));
+    const x=i*(320/(days.length-1||1));
     const y=180-(v/max)*150-10;
     i?ctx.lineTo(x,y):ctx.moveTo(x,y);
   });
