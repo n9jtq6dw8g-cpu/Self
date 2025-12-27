@@ -40,7 +40,19 @@ document.getElementById("saveActivity").onclick=()=>{
   if(!actName.value) return;
   const acts=load(ACT_KEY);
   const id=editId||actName.value.toLowerCase().replace(/\s+/g,"_");
-  acts[id]={id,name:actName.value,unit:actUnit.value,startTime:actStart.value,endTime:actEnd.value,frequency:actFreq.value,days:[...weekdays.querySelectorAll("input:checked")].map(i=>i.value),active:true,archived:false};
+
+  acts[id]={
+    id,
+    name:actName.value,
+    unit:actUnit.value,
+    startTime:actStart.value,
+    endTime:actEnd.value,
+    frequency:actFreq.value,
+    days:[...weekdays.querySelectorAll("input:checked")].map(i=>i.value),
+    active:true,
+    archived:false
+  };
+
   save(ACT_KEY,acts);
   resetForm();
   renderActivities();
@@ -71,12 +83,14 @@ function renderActivities(){
         <button>Edit</button>
         <button>${a.active?"Pause":"Resume"}</button>
         <button>Archive</button>
+        <button>Calendar</button>
       </div>
     `;
-    const [editBtn,toggleBtn,archiveBtn]=c.querySelectorAll("button");
+    const [editBtn,toggleBtn,archiveBtn,calBtn]=c.querySelectorAll("button");
     editBtn.onclick=()=>startEdit(a);
     toggleBtn.onclick=()=>{a.active=!a.active;save(ACT_KEY,acts);renderActivities();populateSelectors();};
     archiveBtn.onclick=()=>{a.archived=true;a.active=false;save(ACT_KEY,acts);renderActivities();populateSelectors();};
+    calBtn.onclick=()=>exportCalendar(a);
     activityList.appendChild(c);
   });
   populateSelectors();
@@ -103,8 +117,18 @@ logDate.value=new Date().toISOString().split("T")[0];
 
 function populateSelectors(){
   const acts=load(ACT_KEY);
-  logActivity.innerHTML=Object.values(acts).filter(a=>a.active&&!a.archived).map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
-  document.getElementById("summaryActivity").innerHTML=Object.values(acts).filter(a=>!a.archived).map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
+  logActivity.innerHTML=Object.values(acts)
+    .filter(a=>a.active&&!a.archived)
+    .map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
+
+  const summarySelect=document.getElementById("summaryActivity");
+  summarySelect.innerHTML=Object.values(acts)
+    .filter(a=>!a.archived)
+    .map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
+
+  if(!summarySelect.value && summarySelect.options.length){
+    summarySelect.value=summarySelect.options[0].value;
+  }
 }
 
 logActivity.onchange=renderLogEntry;
@@ -166,13 +190,13 @@ function renderHistory(){
 
 /* ---------- SUMMARY ---------- */
 const ctx=document.getElementById("summaryGraph").getContext("2d");
-
 document.getElementById("summaryActivity").onchange=renderSummary;
 document.getElementById("summaryRange").onchange=renderSummary;
 
 function renderSummary(){
   const id=document.getElementById("summaryActivity").value;
   if(!id) return;
+
   const logs=load(LOG_KEY);
   let total=0,days=0,sets=[],daily=[];
   Object.keys(logs).sort().forEach(d=>{
@@ -193,7 +217,8 @@ function renderSummary(){
 
   let streak=0;
   Object.keys(logs).sort().reverse().forEach(d=>{
-    if(logs[d][id]) streak++; else if(streak) return;
+    if(logs[d][id]) streak++;
+    else if(streak) return;
   });
   document.getElementById("sStreak").textContent=streak;
 
@@ -215,10 +240,44 @@ function drawGraph(data){
   ctx.stroke();
 }
 
+/* ---------- CALENDAR ---------- */
+function exportCalendar(a){
+  const start=new Date();
+  const until=new Date(); until.setDate(until.getDate()+90);
+  const [sh,sm]=a.startTime.split(":");
+  const [eh,em]=a.endTime.split(":");
+  start.setHours(sh,sm,0);
+  const end=new Date(start); end.setHours(eh,em,0);
+
+  let r="FREQ=DAILY";
+  if(a.frequency==="alternate") r="FREQ=DAILY;INTERVAL=2";
+  if(a.frequency==="custom"){
+    const map={Mon:"MO",Tue:"TU",Wed:"WE",Thu:"TH",Fri:"FR",Sat:"SA",Sun:"SU"};
+    r="FREQ=WEEKLY;BYDAY="+a.days.map(d=>map[d]).join(",");
+  }
+  r+=";UNTIL="+until.toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+
+  const ics=`BEGIN:VCALENDAR
+BEGIN:VEVENT
+SUMMARY:${a.name}
+DTSTART:${start.toISOString().replace(/[-:]/g,"").split(".")[0]}Z
+DTEND:${end.toISOString().replace(/[-:]/g,"").split(".")[0]}Z
+RRULE:${r}
+END:VEVENT
+END:VCALENDAR`;
+
+  const blob=new Blob([ics],{type:"text/calendar"});
+  const link=document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download=a.name+".ics";
+  link.click();
+}
+
 /* ---------- INIT ---------- */
 renderActivities();
 populateSelectors();
 renderLogEntry();
 renderHistory();
+renderSummary();
 
 });
