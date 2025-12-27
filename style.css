@@ -30,7 +30,7 @@ h1 {
 }
 
 button {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .secondary {
@@ -39,6 +39,25 @@ button {
 
 .summary div {
   margin-top: 6px;
+}
+
+#logHistory {
+  margin-top: 12px;
+}
+
+.log-day {
+  margin-bottom: 12px;
+}
+
+.log-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.log-item input {
+  width: 70px;
 }
 
 /* Bottom Navigation */
