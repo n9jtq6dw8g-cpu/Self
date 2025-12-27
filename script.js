@@ -49,7 +49,7 @@ function renderActivities(){
     if(a.archived) return;
 
     const card = document.createElement("div");
-    card.className = "card";
+    card.className = "card" + (a.active ? "" : " paused");
 
     card.innerHTML = `
       <strong>${a.name}</strong> (${a.unit})
@@ -206,6 +206,48 @@ function renderSummary(){
     i?ctx.lineTo(x,y):ctx.moveTo(x,y);
   });
   ctx.stroke();
+}
+
+function exportCalendar(a){
+  if(!a.startTime || !a.endTime){
+    alert("Please set start and end time for this activity.");
+    return;
+  }
+
+  const start=new Date();
+  const until=new Date();
+  until.setDate(until.getDate()+90);
+
+  const [sh,sm]=a.startTime.split(":");
+  const [eh,em]=a.endTime.split(":");
+
+  start.setHours(sh,sm,0,0);
+  const end=new Date(start);
+  end.setHours(eh,em,0,0);
+
+  let r="FREQ=DAILY";
+  if(a.frequency==="alternate") r="FREQ=DAILY;INTERVAL=2";
+  if(a.frequency==="custom"){
+    const map={Mon:"MO",Tue:"TU",Wed:"WE",Thu:"TH",Fri:"FR",Sat:"SA",Sun:"SU"};
+    r="FREQ=WEEKLY;BYDAY="+(a.days||[]).map(d=>map[d]).join(",");
+  }
+
+  r+=";UNTIL="+until.toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+
+  const ics=`BEGIN:VCALENDAR
+BEGIN:VEVENT
+SUMMARY:${a.name}
+DTSTART:${start.toISOString().replace(/[-:]/g,"").split(".")[0]}Z
+DTEND:${end.toISOString().replace(/[-:]/g,"").split(".")[0]}Z
+RRULE:${r}
+END:VEVENT
+END:VCALENDAR`;
+
+  const blob=new Blob([ics],{type:"text/calendar"});
+  const link=document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download=a.name+".ics";
+  link.click();
 }
 
 /* INIT */
