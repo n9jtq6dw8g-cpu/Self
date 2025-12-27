@@ -117,6 +117,7 @@ logDate.value=new Date().toISOString().split("T")[0];
 
 function populateSelectors(){
   const acts=load(ACT_KEY);
+
   logActivity.innerHTML=Object.values(acts)
     .filter(a=>a.active&&!a.archived)
     .map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
@@ -137,6 +138,7 @@ function renderLogEntry(){
   const acts=load(ACT_KEY);
   const a=acts[logActivity.value];
   if(!a){ logEntry.innerHTML=""; return; }
+
   logEntry.innerHTML=`<input type="number" id="logVal" placeholder="${a.unit}"><button>Add</button>`;
   logEntry.querySelector("button").onclick=()=>{
     const logs=load(LOG_KEY);
@@ -154,36 +156,51 @@ function renderHistory(){
   const logs=load(LOG_KEY);
   const acts=load(ACT_KEY);
   logHistory.innerHTML="";
+
   Object.keys(logs).sort().reverse().forEach(date=>{
     const day=document.createElement("div");
     day.className="history-day";
     day.innerHTML=`<strong>${date}</strong>`;
+
     Object.keys(logs[date]).forEach(id=>{
       const act=document.createElement("div");
       act.className="history-activity";
       act.textContent=acts[id]?.name||id;
+
       logs[date][id].forEach((v,idx)=>{
         const set=document.createElement("div");
         set.className="history-set";
         set.innerHTML=`• ${v} ${acts[id]?.unit||""}
           <button>✏️</button>
           <button>🗑️</button>`;
+
         const [editBtn,delBtn]=set.querySelectorAll("button");
+
         editBtn.onclick=()=>{
           const nv=prompt("Edit value",v);
-          if(nv!==null){logs[date][id][idx]=Number(nv);save(LOG_KEY,logs);renderHistory();renderSummary();}
+          if(nv!==null){
+            logs[date][id][idx]=Number(nv);
+            save(LOG_KEY,logs);
+            renderHistory();
+            renderSummary();
+          }
         };
+
         delBtn.onclick=()=>{
           logs[date][id].splice(idx,1);
           if(!logs[date][id].length) delete logs[date][id];
           if(!Object.keys(logs[date]).length) delete logs[date];
           save(LOG_KEY,logs);
-          renderHistory();renderSummary();
+          renderHistory();
+          renderSummary();
         };
+
         act.appendChild(set);
       });
+
       day.appendChild(act);
     });
+
     logHistory.appendChild(day);
   });
 }
@@ -198,7 +215,8 @@ function renderSummary(){
   if(!id) return;
 
   const logs=load(LOG_KEY);
-  let total=0,days=0,sets=[],daily=[];
+  let total=0, days=0, sets=[], daily=[];
+
   Object.keys(logs).sort().forEach(d=>{
     if(logs[d][id]){
       const sum=logs[d][id].reduce((a,b)=>a+b,0);
@@ -211,8 +229,8 @@ function renderSummary(){
 
   document.getElementById("sTotal").textContent=total;
   document.getElementById("sAvg").textContent=days?Math.round(total/days):0;
-  document.getElementById("sBest").textContent=Math.max(...daily,0);
-  document.getElementById("sBestSet").textContent=Math.max(...sets,0);
+  document.getElementById("sBest").textContent=daily.length?Math.max(...daily):0;
+  document.getElementById("sBestSet").textContent=sets.length?Math.max(...sets):0;
   document.getElementById("sActive").textContent=days;
 
   let streak=0;
@@ -228,15 +246,18 @@ function renderSummary(){
 function drawGraph(data){
   ctx.clearRect(0,0,320,180);
   if(!data.length) return;
+
   const max=Math.max(...data,1);
   ctx.beginPath();
   ctx.strokeStyle="#2aa198";
   ctx.lineWidth=2;
+
   data.forEach((v,i)=>{
     const x=i*(320/(data.length-1||1));
     const y=180-(v/max)*160;
     i?ctx.lineTo(x,y):ctx.moveTo(x,y);
   });
+
   ctx.stroke();
 }
 
