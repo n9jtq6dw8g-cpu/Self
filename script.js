@@ -127,9 +127,14 @@ function populateSelectors(){
     .filter(a=>!a.archived)
     .map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
 
-  if(!summarySelect.value && summarySelect.options.length){
+  if(logActivity.options.length){
+    logActivity.value=logActivity.options[0].value;
+  }
+  if(summarySelect.options.length){
     summarySelect.value=summarySelect.options[0].value;
   }
+
+  renderLogEntry();
 }
 
 logActivity.onchange=renderLogEntry;
@@ -205,21 +210,10 @@ function renderHistory(){
   });
 }
 
-/* ---------- SUMMARY (FIXED RANGE LOGIC) ---------- */
+/* ---------- SUMMARY (CORRECTED LOGIC) ---------- */
 const ctx=document.getElementById("summaryGraph").getContext("2d");
 document.getElementById("summaryActivity").onchange=renderSummary;
 document.getElementById("summaryRange").onchange=renderSummary;
-
-function getBucket(dateStr, range){
-  const d=new Date(dateStr);
-  if(range==="weekly"){
-    const onejan=new Date(d.getFullYear(),0,1);
-    return d.getFullYear()+"-W"+Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7);
-  }
-  if(range==="monthly") return d.getFullYear()+"-"+(d.getMonth()+1);
-  if(range==="yearly") return d.getFullYear().toString();
-  return dateStr;
-}
 
 function renderSummary(){
   const id=document.getElementById("summaryActivity").value;
@@ -227,32 +221,50 @@ function renderSummary(){
   if(!id) return;
 
   const logs=load(LOG_KEY);
-  const buckets={};
-  const sets=[];
 
-  Object.keys(logs).forEach(d=>{
+  const dayTotals=[];
+  const dayKeys=Object.keys(logs).sort();
+
+  dayKeys.forEach(d=>{
     if(logs[d][id]){
-      const key = range==="all" ? "all" : getBucket(d,range);
-      buckets[key]=buckets[key]||0;
-      const sum=logs[d][id].reduce((a,b)=>a+b,0);
-      buckets[key]+=sum;
-      logs[d][id].forEach(v=>sets.push(v));
+      dayTotals.push({
+        date:d,
+        total:logs[d][id].reduce((a,b)=>a+b,0)
+      });
     }
   });
 
-  const values=Object.values(buckets);
+  const total=dayTotals.reduce((a,b)=>a+b.total,0);
+  const activeDays=dayTotals.length;
+  const bestDay=dayTotals.length?Math.max(...dayTotals.map(d=>d.total)):0;
 
-  const total=values.reduce((a,b)=>a+b,0);
-  const days=values.length;
+  let streak=0;
+  for(let i=dayKeys.length-1;i>=0;i--){
+    if(logs[dayKeys[i]]?.[id]) streak++;
+    else if(streak) break;
+  }
+
+  let buckets={};
+  dayTotals.forEach(d=>{
+    let key=d.date;
+    const dt=new Date(d.date);
+    if(range==="weekly") key=dt.getFullYear()+"-W"+Math.ceil(dt.getDate()/7);
+    if(range==="monthly") key=dt.getFullYear()+"-"+(dt.getMonth()+1);
+    if(range==="yearly") key=dt.getFullYear();
+    if(range==="all") key="all";
+    buckets[key]=(buckets[key]||0)+d.total;
+  });
+
+  const graphData=Object.values(buckets);
 
   document.getElementById("sTotal").textContent=total;
-  document.getElementById("sAvg").textContent=days?Math.round(total/days):0;
-  document.getElementById("sBest").textContent=values.length?Math.max(...values):0;
-  document.getElementById("sBestSet").textContent=sets.length?Math.max(...sets):0;
-  document.getElementById("sActive").textContent=days;
-  document.getElementById("sStreak").textContent=days;
+  document.getElementById("sAvg").textContent=activeDays?Math.round(total/activeDays):0;
+  document.getElementById("sBest").textContent=bestDay;
+  document.getElementById("sBestSet").textContent=Math.max(0,...dayTotals.flatMap(d=>logs[d.date][id]));
+  document.getElementById("sActive").textContent=activeDays;
+  document.getElementById("sStreak").textContent=streak;
 
-  drawGraph(values);
+  drawGraph(graphData);
 }
 
 function drawGraph(data){
@@ -309,7 +321,6 @@ END:VCALENDAR`;
 /* ---------- INIT ---------- */
 renderActivities();
 populateSelectors();
-renderLogEntry();
 renderHistory();
 renderSummary();
 
