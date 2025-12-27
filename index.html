@@ -12,12 +12,6 @@
 </head>
 <body>
 
-<header>
-  <button class="nav active" data-tab="log">Log</button>
-  <button class="nav" data-tab="summary">Summary</button>
-  <button class="nav" data-tab="settings">Settings</button>
-</header>
-
 <!-- LOG -->
 <section id="log" class="tab active">
   <div class="card">
@@ -48,22 +42,10 @@
   </div>
 
   <div class="metrics">
-    <div class="metric">
-      <div class="label">Total</div>
-      <div class="value" id="mTotal">–</div>
-    </div>
-    <div class="metric">
-      <div class="label">Average</div>
-      <div class="value" id="mAvg">–</div>
-    </div>
-    <div class="metric">
-      <div class="label">Best</div>
-      <div class="value" id="mBest">–</div>
-    </div>
-    <div class="metric">
-      <div class="label">Active Days</div>
-      <div class="value" id="mActive">–</div>
-    </div>
+    <div class="metric"><div class="label">Total</div><div class="value" id="mTotal">–</div></div>
+    <div class="metric"><div class="label">Average</div><div class="value" id="mAvg">–</div></div>
+    <div class="metric"><div class="label">Best</div><div class="value" id="mBest">–</div></div>
+    <div class="metric"><div class="label">Active Days</div><div class="value" id="mActive">–</div></div>
   </div>
 </section>
 
@@ -86,7 +68,7 @@
       <input id="actEnd" type="time" />
     </div>
 
-    <select id="actFreq" onchange="toggleWeekdays()">
+    <select id="actFreq">
       <option value="daily">Daily</option>
       <option value="alternate">Alternate days</option>
       <option value="custom">Custom days</option>
@@ -102,13 +84,7 @@
       <label><input type="checkbox" value="SU">Sun</label>
     </div>
 
-    <select id="actDuration">
-      <option value="1">1 Month</option>
-      <option value="3" selected>3 Months</option>
-      <option value="6">6 Months</option>
-    </select>
-
-    <button id="saveActivityBtn" onclick="saveActivity()">Save Activity</button>
+    <button id="saveActivityBtn">Save Activity</button>
   </div>
 
   <div class="card">
@@ -118,9 +94,16 @@
 
   <div class="card">
     <h2>Preferences</h2>
-    <button onclick="toggleTheme()">Dark / Light</button>
+    <button id="themeToggle">Dark / Light</button>
   </div>
 </section>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button data-tab="log" class="active">🏃<span>Log</span></button>
+  <button data-tab="summary">📊<span>Summary</span></button>
+  <button data-tab="settings">⚙️<span>Settings</span></button>
+</nav>
 
 <script src="script.js"></script>
 </body>
