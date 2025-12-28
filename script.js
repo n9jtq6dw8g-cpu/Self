@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded",()=>{
-  alert("script.js loaded");
 
 const archivedToggle=document.getElementById("archivedToggle");
 const archivedList=document.getElementById("archivedActivityList");
