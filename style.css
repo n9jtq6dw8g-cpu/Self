@@ -55,6 +55,12 @@ body{
   color:var(--muted);
 }
 
+.section-title.collapsible::after{
+  content:" ▾";
+  font-size:14px;
+  color:var(--muted);
+}
+
 input,select,button{
   width:100%;
   padding:12px 14px;
