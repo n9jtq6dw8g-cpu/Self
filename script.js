@@ -380,6 +380,22 @@ function renderSummary(){
   const max = Math.max(...values, 1);
   const step = values.length > 1 ? 320 / (values.length - 1) : 160;
 
+  ctx.strokeStyle = "rgba(0,0,0,0.1)";
+  ctx.lineWidth = 1;
+  ctx.font = "10px Nunito";
+  ctx.fillStyle = "#888";
+
+  for (let i = 0; i <= 4; i++) {
+    const y = 170 - (i * 140 / 4);
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(320, y);
+    ctx.stroke();
+
+    const value = Math.round((max / 4) * i);
+    ctx.fillText(value, 4, y - 2);
+  }
+  
   ctx.beginPath();
   values.forEach((v,i)=>{
     const x = i * step;
@@ -397,6 +413,17 @@ function renderSummary(){
     ctx.arc(x, y, 3, 0, Math.PI * 2);
     ctx.fillStyle = "#F57F5B";
     ctx.fill();
+  });
+
+  ctx.fillStyle = "#888";
+  ctx.font = "10px Nunito";
+
+  data.forEach((d, i) => {
+    // show only ~4 labels to avoid clutter
+    if (i % Math.ceil(data.length / 4) === 0) {
+      const x = i * step;
+      ctx.fillText(d.date.slice(5), x - 10, 178);
+    }
   });
 }
 
