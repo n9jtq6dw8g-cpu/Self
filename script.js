@@ -44,11 +44,15 @@ actFreq.onchange=()=>weekdays.classList.toggle("hidden",actFreq.value!=="custom"
 document.getElementById("saveActivity").onclick=()=>{
   if(!actName.value) return;
   const a=load(ACT);
-  const id=edit||actName.value.toLowerCase().replace(/\s+/g,"_");
+  const id = edit ?? actName.value.toLowerCase().replace(/\s+/g,"_");
   a[id]={id,name:actName.value,unit:actUnit.value,startTime:actStart.value,endTime:actEnd.value,frequency:actFreq.value,days:[...weekdays.querySelectorAll("input:checked")].map(i=>i.value),active:true};
   save(ACT,a);
   resetActivityForm();
   renderActivities();
+};
+
+document.getElementById("cancelEdit").onclick = () => {
+  resetActivityForm();
 };
 
 function renderActivities(){
@@ -170,6 +174,7 @@ function renderEntry(){
     l[d][a.id]=l[d][a.id]||[];
     l[d][a.id].push(+document.getElementById("val").value);
     save(LOG,l);
+    document.getElementById("val").value = ""; //
     renderHistory();
     renderSummary();
   };
@@ -208,8 +213,9 @@ function renderHistory(){
 
         s.querySelector(".edit").onclick = ()=>{
           const nv = prompt("Edit value", v);
-          if(nv === null || nv === "") return;
-          l[d][id][idx] = +nv;
+          const num = Number(nv);
+          if (nv === null || isNaN(num) || num < 0) return;
+          l[d][id][idx] = num;
           save(LOG, l);
           renderHistory();
           renderSummary();
