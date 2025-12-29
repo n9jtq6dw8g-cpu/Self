@@ -187,11 +187,18 @@ function renderHistory(){
     day.innerHTML = `<strong>${formatHistoryDate(d)}</strong>`;
 
     Object.keys(l[d]).forEach(id=>{
+      const act = a[id];
+      if(!act) return;
+
+      const group = document.createElement("div");
+      group.style.marginTop = "8px";
+      group.innerHTML = `<strong>${act.name}</strong>`;
+
       l[d][id].forEach((v, idx)=>{
         const s = document.createElement("div");
         s.className = "history-set";
         s.innerHTML = `
-          <span>${v} ${a[id]?.unit || ""}</span>
+          <span>${v} ${act.unit}</span>
           <button class="icon-btn edit">
             <svg><use xlink:href="#icon-edit"/></svg>
           </button>
@@ -200,7 +207,6 @@ function renderHistory(){
           </button>
         `;
 
-        /* EDIT */
         s.querySelector(".edit").onclick = ()=>{
           const nv = prompt("Edit value", v);
           if(nv === null || nv === "") return;
@@ -210,7 +216,6 @@ function renderHistory(){
           renderSummary();
         };
 
-        /* DELETE */
         s.querySelector(".delete").onclick = ()=>{
           if(!confirm("Delete this entry?")) return;
           l[d][id].splice(idx,1);
@@ -221,9 +226,12 @@ function renderHistory(){
           renderSummary();
         };
 
-        day.appendChild(s);
+        group.appendChild(s);
       });
+
+      day.appendChild(group);
     });
+
 
     hist.appendChild(day);
   });
@@ -231,8 +239,26 @@ function renderHistory(){
 
 /* SUMMARY */
 const ctx=document.getElementById("summaryGraph").getContext("2d");
-document.getElementById("summaryActivity").onchange=renderSummary;
-document.getElementById("summaryRange").onchange=renderSummary;
+const summaryRange = document.getElementById("summaryRange");
+const sDate = document.getElementById("summaryDate");
+const sMonth = document.getElementById("summaryMonth");
+const sYear = document.getElementById("summaryYear");
+
+summaryRange.onchange = ()=>{
+  sDate.classList.add("hidden");
+  sMonth.classList.add("hidden");
+  sYear.classList.add("hidden");
+
+  if(summaryRange.value === "daily") sDate.classList.remove("hidden");
+  if(summaryRange.value === "monthly") sMonth.classList.remove("hidden");
+  if(summaryRange.value === "yearly") sYear.classList.remove("hidden");
+
+  renderSummary();
+};
+
+document.getElementById("summaryActivity").onchange = renderSummary;
+[sDate, sMonth, sYear].forEach(i => i.onchange = renderSummary);
+
 
 function renderSummary(){
   const id=document.getElementById("summaryActivity").value;
@@ -242,12 +268,34 @@ function renderSummary(){
 }
   const range=document.getElementById("summaryRange").value;
   const l=load(LOG);
-  const now=new Date(); now.setHours(0,0,0,0);
-  let start=new Date(now);
-  if(range==="weekly") start.setDate(now.getDate()-now.getDay());
-  if(range==="monthly") start=new Date(now.getFullYear(),now.getMonth(),1);
-  if(range==="yearly") start=new Date(now.getFullYear(),0,1);
-  if(range==="all") start=new Date("1970-01-01");
+  let start, end;
+
+  if(range === "daily" && sDate.value){
+    start = new Date(sDate.value);
+    end = new Date(start);
+  }
+  else if(range === "monthly" && sMonth.value){
+    const [y,m] = sMonth.value.split("-");
+    start = new Date(y, m-1, 1);
+    end = new Date(y, m, 0);
+  }
+  else if(range === "yearly" && sYear.value){
+    start = new Date(sYear.value, 0, 1);
+    end = new Date(sYear.value, 11, 31);
+  }
+  else{
+    const now = new Date();
+    now.setHours(0,0,0,0);
+
+    start = new Date(now);
+    if(range==="weekly") start.setDate(now.getDate()-now.getDay());
+    if(range==="monthly") start = new Date(now.getFullYear(),now.getMonth(),1);
+    if(range==="yearly") start = new Date(now.getFullYear(),0,1);
+    if(range==="all") start = new Date("1970-01-01");
+
+    end = now;
+}
+
 
 let data = [];
 let sets = [];
@@ -256,7 +304,7 @@ Object.keys(l)
   .sort()
   .forEach(d=>{
     const dt = new Date(d);
-    if(dt >= start && l[d][id]){
+    if(dt >= start && dt <= end && l[d][id]){
       const sum = l[d][id].reduce((a,b)=>a+b,0);
       data.push({ date:d, value:sum });
       l[d][id].forEach(v=>sets.push(v));
@@ -318,40 +366,51 @@ function exportCalendar(a){
     return;
   }
 
-  const start=new Date();
-  const until=new Date();
-  until.setDate(until.getDate()+90);
+  const start = new Date();
+  const until = new Date();
+  until.setDate(until.getDate() + 90);
 
-  const [sh,sm]=a.startTime.split(":");
-  const [eh,em]=a.endTime.split(":");
+  const [sh, sm] = a.startTime.split(":");
+  const [eh, em] = a.endTime.split(":");
 
-  start.setHours(sh,sm,0,0);
-  const end=new Date(start);
-  end.setHours(eh,em,0,0);
+  start.setHours(sh, sm, 0, 0);
+  const end = new Date(start);
+  end.setHours(eh, em, 0, 0);
 
-  let r="FREQ=DAILY";
-  if(a.frequency==="alternate") r="FREQ=DAILY;INTERVAL=2";
-  if(a.frequency==="custom"){
-    const map={Mon:"MO",Tue:"TU",Wed:"WE",Thu:"TH",Fri:"FR",Sat:"SA",Sun:"SU"};
-    r="FREQ=WEEKLY;BYDAY="+(a.days||[]).map(d=>map[d]).join(",");
+  let r = "FREQ=DAILY";
+  if(a.frequency === "alternate") r = "FREQ=DAILY;INTERVAL=2";
+  if(a.frequency === "custom"){
+    const map = {Mon:"MO",Tue:"TU",Wed:"WE",Thu:"TH",Fri:"FR",Sat:"SA",Sun:"SU"};
+    r = "FREQ=WEEKLY;BYDAY=" + (a.days || []).map(d => map[d]).join(",");
   }
 
-  r+=";UNTIL="+until.toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  r += ";UNTIL=" + until.toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
 
-  const ics=`BEGIN:VCALENDAR
-BEGIN:VEVENT
-SUMMARY:${a.name}
-DTSTART:${start.toISOString().replace(/[-:]/g,"").split(".")[0]}Z
-DTEND:${end.toISOString().replace(/[-:]/g,"").split(".")[0]}Z
-RRULE:${r}
-END:VEVENT
-END:VCALENDAR`;
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "BEGIN:VEVENT",
+    `SUMMARY:${a.name}`,
+    `DTSTART:${start.toISOString().replace(/[-:]/g,"").split(".")[0]}Z`,
+    `DTEND:${end.toISOString().replace(/[-:]/g,"").split(".")[0]}Z`,
+    `RRULE:${r}`,
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].join("\n");
 
-  const blob=new Blob([ics],{type:"text/calendar"});
-  const link=document.createElement("a");
-  link.href=URL.createObjectURL(blob);
-  link.download=a.name+".ics";
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${a.name}.ics`;
+  document.body.appendChild(link);
   link.click();
+
+  setTimeout(()=>{
+    URL.revokeObjectURL(url);
+    link.remove();
+  }, 0);
 }
 
 function resetActivityForm(){
