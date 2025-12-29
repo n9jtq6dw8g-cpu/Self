@@ -238,7 +238,28 @@ function renderHistory(){
 }
 
 /* SUMMARY */
-const ctx=document.getElementById("summaryGraph").getContext("2d");
+const summaryRange = document.getElementById("summaryRange");
+const sDate = document.getElementById("summaryDate");
+const sMonth = document.getElementById("summaryMonth");
+const sYear = document.getElementById("summaryYear");
+
+summaryRange.onchange = () => {
+  sDate.classList.add("hidden");
+  sMonth.classList.add("hidden");
+  sYear.classList.add("hidden");
+
+  if (summaryRange.value === "daily") sDate.classList.remove("hidden");
+  if (summaryRange.value === "monthly") sMonth.classList.remove("hidden");
+  if (summaryRange.value === "yearly") sYear.classList.remove("hidden");
+
+  renderSummary();
+};
+
+document.getElementById("summaryActivity").onchange = renderSummary;
+[sDate, sMonth, sYear].forEach(i => i.onchange = renderSummary);
+
+const graphEl = document.getElementById("summaryGraph");
+const ctx = graphEl ? graphEl.getContext("2d") : null;
 const summaryRange = document.getElementById("summaryRange");
 const sDate = document.getElementById("summaryDate");
 const sMonth = document.getElementById("summaryMonth");
@@ -261,39 +282,104 @@ document.getElementById("summaryActivity").onchange = renderSummary;
 
 
 function renderSummary(){
-  const id=document.getElementById("summaryActivity").value;
-  if(!id){
-  ctx.clearRect(0,0,320,180);
-  return;
-}
-  const range=document.getElementById("summaryRange").value;
-  const l=load(LOG);
+  if (!ctx) return;
+
+  const id = document.getElementById("summaryActivity").value;
+  if (!id) {
+    ctx.clearRect(0,0,320,180);
+    return;
+  }
+
+  const range = summaryRange.value;
+  const l = load(LOG);
+
   let start, end;
 
-  if(range === "daily" && sDate.value){
+  if (range === "daily" && sDate.value) {
     start = new Date(sDate.value);
     end = new Date(start);
   }
-  else if(range === "monthly" && sMonth.value){
-    const [y,m] = sMonth.value.split("-");
-    start = new Date(y, m-1, 1);
+  else if (range === "monthly" && sMonth.value) {
+    const [y, m] = sMonth.value.split("-");
+    start = new Date(y, m - 1, 1);
     end = new Date(y, m, 0);
   }
-  else if(range === "yearly" && sYear.value){
+  else if (range === "yearly" && sYear.value) {
     start = new Date(sYear.value, 0, 1);
     end = new Date(sYear.value, 11, 31);
   }
-  else{
+  else {
     const now = new Date();
     now.setHours(0,0,0,0);
 
     start = new Date(now);
-    if(range==="weekly") start.setDate(now.getDate()-now.getDay());
-    if(range==="monthly") start = new Date(now.getFullYear(),now.getMonth(),1);
-    if(range==="yearly") start = new Date(now.getFullYear(),0,1);
-    if(range==="all") start = new Date("1970-01-01");
+    if (range === "weekly") start.setDate(now.getDate() - now.getDay());
+    if (range === "monthly") start = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (range === "yearly") start = new Date(now.getFullYear(), 0, 1);
+    if (range === "all") start = new Date("1970-01-01");
 
     end = now;
+  }
+
+  let data = [];
+  let sets = [];
+
+  Object.keys(l)
+    .sort()
+    .forEach(d => {
+      const dt = new Date(d);
+      if (dt >= start && dt <= end && l[d][id]) {
+        const sum = l[d][id].reduce((a,b)=>a+b,0);
+        data.push({ date: d, value: sum });
+        l[d][id].forEach(v => sets.push(v));
+      }
+    });
+
+  const values = data.map(x => x.value);
+
+  document.getElementById("sTotal").textContent =
+    values.reduce((a,b)=>a+b,0);
+
+  document.getElementById("sAvg").textContent =
+    values.length ? Math.round(values.reduce((a,b)=>a+b,0)/values.length) : 0;
+
+  document.getElementById("sBest").textContent =
+    Math.max(0, ...values);
+
+  document.getElementById("sBestSet").textContent =
+    Math.max(0, ...sets);
+
+  document.getElementById("sActive").textContent =
+    values.length;
+
+  document.getElementById("sStreak").textContent =
+    calculateStreak(l, id);
+
+  /* DRAW GRAPH */
+  ctx.clearRect(0,0,320,180);
+  if (!values.length) return;
+
+  const max = Math.max(...values, 1);
+  const step = values.length > 1 ? 320 / (values.length - 1) : 160;
+
+  ctx.beginPath();
+  values.forEach((v,i)=>{
+    const x = i * step;
+    const y = 170 - (v / max) * 140;
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+  });
+  ctx.strokeStyle = "#F57F5B";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  values.forEach((v,i)=>{
+    const x = i * step;
+    const y = 170 - (v / max) * 140;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = "#F57F5B";
+    ctx.fill();
+  });
 }
 
 
