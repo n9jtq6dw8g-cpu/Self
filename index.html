@@ -65,16 +65,18 @@
     <div class="row">
       <select id="summaryActivity"></select>
       <select id="summaryRange">
-        <input type="date" id="summaryDate" class="hidden">
-        <input type="month" id="summaryMonth" class="hidden">
-        <input type="number" id="summaryYear" class="hidden" placeholder="Year">
-        <option value="daily">Today</option>
-        <option value="weekly">This Week</option>
-        <option value="monthly">This Month</option>
-        <option value="yearly">This Year</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
         <option value="all">All Time</option>
       </select>
     </div>
+
+    <input type="date" id="summaryDate" class="hidden">
+    <input type="month" id="summaryMonth" class="hidden">
+    <input type="number" id="summaryYear" class="hidden" placeholder="Year">
+
 
     <div class="graph-card">
       <canvas id="summaryGraph" width="320" height="180"></canvas>
