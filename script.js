@@ -247,13 +247,37 @@ const summaryRange = document.getElementById("summaryRange");
 const sDate = document.getElementById("summaryDate");
 const sMonth = document.getElementById("summaryMonth");
 const sYear = document.getElementById("summaryYear");
+const sWeek = document.getElementById("summaryWeek");
+
+  /* populate year dropdown */
+const currentYear = new Date().getFullYear();
+sYear.innerHTML = "";
+for (let y = currentYear; y >= currentYear - 5; y--) {
+  sYear.innerHTML += `<option value="${y}">${y}</option>`;
+}
+
+/* populate week dropdown */
+sWeek.innerHTML = "";
+for (let w = 1; w <= 52; w++) {
+  sWeek.innerHTML += `<option value="${w}">Week ${w}</option>`;
+}
+
+
+summaryRange.value = "weekly";
 
 summaryRange.onchange = () => {
   sDate.classList.add("hidden");
   sMonth.classList.add("hidden");
   sYear.classList.add("hidden");
+  sWeek.classList.add("hidden");
 
   if (summaryRange.value === "daily") sDate.classList.remove("hidden");
+
+  if (summaryRange.value === "weekly") {
+    sYear.classList.remove("hidden");
+    sWeek.classList.remove("hidden");
+  }
+
   if (summaryRange.value === "monthly") sMonth.classList.remove("hidden");
   if (summaryRange.value === "yearly") sYear.classList.remove("hidden");
 
@@ -298,7 +322,16 @@ function renderSummary(){
     now.setHours(0,0,0,0);
 
     start = new Date(now);
-    if (range === "weekly") start.setDate(now.getDate() - now.getDay());
+    if (range === "weekly" && sYear.value && sWeek.value) {
+    const year = Number(sYear.value);
+    const week = Number(sWeek.value);
+
+    start = new Date(year, 0, 1 + (week - 1) * 7);
+    start.setDate(start.getDate() - start.getDay());
+
+    end = new Date(start);
+    end.setDate(start.getDate() + 6);
+  }
     if (range === "monthly") start = new Date(now.getFullYear(), now.getMonth(), 1);
     if (range === "yearly") start = new Date(now.getFullYear(), 0, 1);
     if (range === "all") start = new Date("1970-01-01");
