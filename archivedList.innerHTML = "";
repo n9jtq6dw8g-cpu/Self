@@ -54,7 +54,7 @@ document.getElementById("saveActivity").onclick=()=>{
 function renderActivities(){
   const acts = load(ACT);
   list.innerHTML = "";
-  archivedList.innerHTML = "";
+  if (archivedList) archivedList.innerHTML = "";
 
   Object.values(acts).forEach(a=>{
 
@@ -75,7 +75,7 @@ function renderActivities(){
         renderActivities();
         populate();
       };
-      archivedList.appendChild(arc);
+      if (archivedList) archivedList.appendChild(arc);
       return;
     }
 
@@ -140,7 +140,6 @@ const entry=document.getElementById("logEntry");
 const hist=document.getElementById("logHistory");
 
 function populate(){
-  const sel=document.getElementById("logActivity");
   const summarySel=document.getElementById("summaryActivity");
   if(!sel || !summarySel) return;
 
@@ -260,26 +259,6 @@ document.getElementById("summaryActivity").onchange = renderSummary;
 
 const graphEl = document.getElementById("summaryGraph");
 const ctx = graphEl ? graphEl.getContext("2d") : null;
-const summaryRange = document.getElementById("summaryRange");
-const sDate = document.getElementById("summaryDate");
-const sMonth = document.getElementById("summaryMonth");
-const sYear = document.getElementById("summaryYear");
-
-summaryRange.onchange = ()=>{
-  sDate.classList.add("hidden");
-  sMonth.classList.add("hidden");
-  sYear.classList.add("hidden");
-
-  if(summaryRange.value === "daily") sDate.classList.remove("hidden");
-  if(summaryRange.value === "monthly") sMonth.classList.remove("hidden");
-  if(summaryRange.value === "yearly") sYear.classList.remove("hidden");
-
-  renderSummary();
-};
-
-document.getElementById("summaryActivity").onchange = renderSummary;
-[sDate, sMonth, sYear].forEach(i => i.onchange = renderSummary);
-
 
 function renderSummary(){
   if (!ctx) return;
@@ -380,70 +359,6 @@ function renderSummary(){
     ctx.fillStyle = "#F57F5B";
     ctx.fill();
   });
-}
-
-
-let data = [];
-let sets = [];
-
-Object.keys(l)
-  .sort()
-  .forEach(d=>{
-    const dt = new Date(d);
-    if(dt >= start && dt <= end && l[d][id]){
-      const sum = l[d][id].reduce((a,b)=>a+b,0);
-      data.push({ date:d, value:sum });
-      l[d][id].forEach(v=>sets.push(v));
-    }
-  });
-
-const values = data.map(x=>x.value);
-
-document.getElementById("sTotal").textContent =
-  values.reduce((a,b)=>a+b,0);
-
-document.getElementById("sAvg").textContent =
-  values.length ? Math.round(values.reduce((a,b)=>a+b,0)/values.length) : 0;
-
-document.getElementById("sBest").textContent =
-  Math.max(0, ...values);
-
-document.getElementById("sBestSet").textContent =
-  Math.max(0, ...sets);
-
-document.getElementById("sActive").textContent =
-  values.length;
-
-document.getElementById("sStreak").textContent =
-  calculateStreak(l, id);
-
-/* DRAW GRAPH */
-ctx.clearRect(0,0,320,180);
-if(values.length === 0) return;
-
-const max = Math.max(...values, 1);
-const step = values.length > 1 ? 320 / (values.length - 1) : 160;
-
-ctx.beginPath();
-values.forEach((v,i)=>{
-  const x = i * step;
-  const y = 170 - (v / max) * 140;
-  i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
-});
-ctx.strokeStyle = "#F57F5B";
-ctx.lineWidth = 2;
-ctx.stroke();
-
-/* DOTS */
-values.forEach((v,i)=>{
-  const x = i * step;
-  const y = 170 - (v / max) * 140;
-  ctx.beginPath();
-  ctx.arc(x, y, 3, 0, Math.PI * 2);
-  ctx.fillStyle = "#F57F5B";
-  ctx.fill();
-});
-
 }
 
 function exportCalendar(a){
