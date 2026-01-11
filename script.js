@@ -29,6 +29,34 @@ document.getElementById("toggleTheme").onclick=()=>{
   document.body.classList.toggle("dark");
 };
 
+document.getElementById("downloadBackup").onclick = () => {
+  const backup = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    activities: load(ACT),
+    logs: load(LOG)
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(backup, null, 2)],
+    { type: "application/json" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = `tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
+
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    a.remove();
+  }, 0);
+};
+
 /* ACTIVITIES */
 const actName = document.getElementById("actName");
 const actUnit=document.getElementById("actUnit");
