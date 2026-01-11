@@ -57,6 +57,51 @@ document.getElementById("downloadBackup").onclick = () => {
   }, 0);
 };
 
+document.getElementById("restoreBackup").onclick = () => {
+  if (!confirm(
+    "This will ERASE all current data and replace it with the backup.\n\nContinue?"
+  )) return;
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "application/json";
+
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+
+        if (!data.activities || !data.logs) {
+          alert("Invalid backup file.");
+          return;
+        }
+
+        // OVERWRITE restore
+        localStorage.setItem("activities", JSON.stringify(data.activities));
+        localStorage.setItem("logs", JSON.stringify(data.logs));
+
+        // Re-render everything
+        renderActivities();
+        populate();
+        renderHistory();
+        renderSummary();
+
+        alert("Backup restored successfully.");
+      } catch (e) {
+        alert("Failed to read backup file.");
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
+  input.click();
+};
+
 /* ACTIVITIES */
 const actName = document.getElementById("actName");
 const actUnit=document.getElementById("actUnit");
