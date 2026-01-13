@@ -453,7 +453,8 @@ function renderSummary(){
   const max = Math.max(...values, 1);
   const step = values.length > 1 ? 320 / (values.length - 1) : 160;
 
-  ctx.strokeStyle = "rgba(0,0,0,0.1)";
+  /* GRID */
+  ctx.strokeStyle = "rgba(0,0,0,0.08)";
   ctx.lineWidth = 1;
   ctx.font = "10px Nunito";
   ctx.fillStyle = "#888";
@@ -468,7 +469,25 @@ function renderSummary(){
     const value = Math.round((max / 4) * i);
     ctx.fillText(value, 4, y - 2);
   }
+
+  /* AREA FILL */
+  const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+  gradient.addColorStop(0, "rgba(245,127,91,.35)");
+  gradient.addColorStop(1, "rgba(245,127,91,0)");
+
+  ctx.beginPath();
+  values.forEach((v,i)=>{
+    const x = i * step;
+    const y = 170 - (v / max) * 140;
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+  });
+  ctx.lineTo(320,170);
+  ctx.lineTo(0,170);
+  ctx.closePath();
+  ctx.fillStyle = gradient;
+  ctx.fill();
   
+  /* LINE */
   ctx.beginPath();
   values.forEach((v,i)=>{
     const x = i * step;
@@ -476,16 +495,21 @@ function renderSummary(){
     i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
   });
   ctx.strokeStyle = "#F57F5B";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
   ctx.stroke();
-
+  
+  /* POINTS */
   values.forEach((v,i)=>{
     const x = i * step;
     const y = 170 - (v / max) * 140;
     ctx.beginPath();
-    ctx.arc(x, y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = "#F57F5B";
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
     ctx.fill();
+    ctx.strokeStyle = "#F57F5B";
+    ctx.stroke();
   });
 
   ctx.fillStyle = "#888";
