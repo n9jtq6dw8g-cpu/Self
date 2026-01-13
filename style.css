@@ -1,27 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
 :root{
-  --bg:#FFF6E8;
+  --bg:#FFF4E6;          /* warm paper */
   --card:#FFFFFF;
-  --surface:#FFF1DB;
-  --text:#4A3A2A;
-  --muted:#7A6A58;
-  --accent:#F57F5B;
+  --surface:#FFF0D9;
+  --text:#3E2F24;        /* deeper brown */
+  --muted:#8A7A66;
+
+  --accent:#F57F5B;     /* main orange */
+  --accent-soft:#FACA78;
+  --teal:#68C7C1;
   --danger:#DD5341;
+
   --border:rgba(0,0,0,.06);
 
-  --r-lg:18px;
-  --r-md:14px;
-  --r-sm:10px;
+  --r-lg:20px;
+  --r-md:16px;
+  --r-sm:12px;
 }
 
 body.dark{
-  --bg:#2A1E18;
-  --card:#3A2A22;
-  --surface:#33241E;
+  --bg:#241914;
+  --card:#32231C;
+  --surface:#2B1F19;
   --text:#F6EEDF;
-  --muted:#CBBBAA;
-  --border:rgba(255,255,255,.06);
+  --muted:#C8B8A6;
+  --border:rgba(255,255,255,.08);
 }
 
 *{
@@ -50,8 +54,11 @@ body{
 }
 
 .section-title{
-  margin:16px 0 6px;
+  margin:22px 0 10px;
   font-weight:700;
+  font-size:14px;
+  letter-spacing:.3px;
+  text-transform:uppercase;
   color:var(--muted);
 }
 
@@ -72,15 +79,24 @@ input,select,button{
 }
 
 button{
-  background:var(--accent);
-  color:#fff;
   border:none;
   font-weight:700;
+  color:#fff;
+  background:var(--accent); /* fallback */
+}
+
+button:not(.secondary){
+  background:linear-gradient(
+    180deg,
+    #F89A7A,
+    #F57F5B
+  );
 }
 
 button.secondary{
   background:var(--surface);
   color:var(--text);
+  border:1px solid var(--border);
 }
 
 .row{
@@ -146,11 +162,16 @@ button.secondary{
 }
 
 .icon-btn{
-  background:var(--surface);
+  background:rgba(0,0,0,.04);
   border:none;
   padding:6px;
   border-radius:var(--r-sm);
   color:var(--muted);
+  transition:transform .1s ease, background .1s ease;
+}
+
+.icon-btn:active{
+  transform:scale(.95);
 }
 
 .icon-btn svg{
@@ -158,7 +179,9 @@ button.secondary{
   height:16px;
 }
 
-.icon-btn.delete{color:var(--danger);}
+.icon-btn.delete{
+  color:var(--danger);
+}
 
 .bottom-nav{
   position:fixed;
@@ -167,6 +190,7 @@ button.secondary{
   right:0;
   display:flex;
   background:var(--surface);
+  box-shadow:0 -6px 20px rgba(0,0,0,.06);
   border-top:1px solid var(--border);
 }
 
@@ -189,9 +213,30 @@ button.secondary{
   color:var(--accent);
 }
 
+.nav-btn.active svg{
+  transform:scale(1.15);
+}
+
+.nav-btn svg{
+  transition:transform .15s ease, color .15s ease;
+}
+
+.card,
+.history-day,
+.graph-card{
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.04),
+    0 2px 6px rgba(0,0,0,.03);
+}
+
 .card.paused{
   opacity:0.5;
   filter:grayscale(0.6);
+}
+
+.card.paused{
+  opacity:.55;
+  filter:saturate(.7);
 }
 
 .collapsed{
@@ -200,6 +245,16 @@ button.secondary{
 
 .section-title.collapsible{
   cursor:pointer;
+}
+
+#downloadBackup{
+  background:linear-gradient(180deg,#FACA78,#F5B85B);
+  color:#4A3A2A;
+}
+
+#restoreBackup{
+  background:linear-gradient(180deg,#7FD1CB,#68C7C1);
+  color:#0F3F3C;
 }
 
 .hidden{display:none;}
