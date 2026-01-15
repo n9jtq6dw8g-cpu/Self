@@ -404,6 +404,52 @@ button{
   color:var(--danger);
 }
 
+/* ===== Summary screen: analytics foundation ===== */
 
+#screen-summary{
+  background:var(--bg);
+}
+
+/* Section spacing */
+#screen-summary .row{
+  margin-bottom:16px;
+}
+
+/* Summary card base */
+#screen-summary .graph-card{
+  background:var(--card);
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
+}
+
+/* Metrics grid: calmer, analytical */
+#screen-summary .metrics{
+  margin-top:16px;
+  gap:12px;
+}
+
+#screen-summary .metrics div{
+  background:var(--card);
+  border-radius:14px;
+  padding:14px;
+  text-align:left;
+  box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+
+/* Metrics typography */
+
+#screen-summary .metrics div{
+  font-size:13px;
+  color:var(--muted);
+}
+
+#screen-summary .metrics span{
+  display:block;
+  margin-top:4px;
+  font-size:22px;
+  font-weight:700;
+  color:var(--text);
+}
 
 .hidden{display:none;}
