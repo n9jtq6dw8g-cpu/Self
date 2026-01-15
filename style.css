@@ -1,30 +1,44 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
-:root{
-  --bg:#FFF4E6;          /* warm paper */
-  --card:#FFFFFF;
-  --surface:#FFF0D9;
-  --text:#3E2F24;        /* deeper brown */
-  --muted:#8A7A66;
+*{
+  font-family:'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
 
-  --accent:#F57F5B;     /* main orange */
-  --accent-soft:#FACA78;
-  --teal:#68C7C1;
-  --danger:#DD5341;
+:root{
+  /* Backgrounds */
+  --bg:#F6F7FB;              /* app background */
+  --card:#FFFFFF;           /* cards */
+  --surface:#F0F2F7;        /* subtle fills */
+
+  /* Text */
+  --text:#1F2937;           /* primary text */
+  --muted:#6B7280;          /* labels / secondary */
+
+  /* Accent (choose ONE primary) */
+  --accent:#6C5CE7;         /* purple (like reference) */
+  /* alternatives:
+     #F57F5B  → orange
+     #10B981  → teal
+  */
+
+  --danger:#EF4444;
 
   --border:rgba(0,0,0,.06);
 
-  --r-lg:20px;
-  --r-md:16px;
-  --r-sm:12px;
+  /* Radius (clean, modern) */
+  --r-lg:18px;
+  --r-md:14px;
+  --r-sm:10px;
 }
 
 body.dark{
-  --bg:#241914;
-  --card:#32231C;
-  --surface:#2B1F19;
-  --text:#F6EEDF;
-  --muted:#C8B8A6;
+  --bg:#0F172A;
+  --card:#111827;
+  --surface:#1F2937;
+
+  --text:#E5E7EB;
+  --muted:#9CA3AF;
+
   --border:rgba(255,255,255,.08);
 }
 
@@ -78,11 +92,27 @@ input,select,button{
   color:var(--text);
 }
 
+input,
+select,
+textarea{
+  font-size:16px;          /* fixes Safari zoom */
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+}
+
 button{
   border:none;
   font-weight:700;
   color:#fff;
   background:var(--accent); /* fallback */
+}
+
+button{
+  background:var(--accent);
+  color:#fff;
+  font-weight:600;
+  letter-spacing:.2px;
 }
 
 button:not(.secondary){
@@ -97,6 +127,11 @@ button.secondary{
   background:var(--surface);
   color:var(--text);
   border:1px solid var(--border);
+}
+
+button.secondary{
+  background:var(--surface);
+  color:var(--text);
 }
 
 .row{
@@ -229,6 +264,15 @@ button.secondary{
     0 2px 6px rgba(0,0,0,.03);
 }
 
+.card,
+.history-day,
+.graph-card{
+  background:var(--card);
+  border-radius:var(--r-lg);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.06);
+}
+
 .card.paused{
   opacity:0.5;
   filter:grayscale(0.6);
@@ -256,5 +300,110 @@ button.secondary{
   background:linear-gradient(180deg,#7FD1CB,#68C7C1);
   color:#0F3F3C;
 }
+
+/* ===== Typography hierarchy (design layer) ===== */
+
+*{
+  font-family:'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body{
+  font-size:16px;
+  line-height:1.4;
+}
+
+.screen-title{
+  font-weight:800;
+}
+
+.section-title{
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.card strong{
+  font-weight:700;
+}
+
+button{
+  font-weight:600;
+}
+
+/* ===== Log screen labels ===== */
+
+#screen-log label{
+  font-size:13px;
+  font-weight:600;
+  color:var(--muted);
+  margin-top:14px;
+  display:block;
+}
+
+/* ===== Log input grouping ===== */
+
+#screen-log input,
+#screen-log select{
+  background:#fff;
+}
+
+#screen-log .log-input{
+  margin-top:12px;
+}
+
+/* ===== Today log card ===== */
+
+#screen-log{
+  position:relative;
+}
+
+#screen-log::before{
+  content:"";
+  position:absolute;
+  top:72px;
+  left:16px;
+  right:16px;
+  height:260px;
+  background:var(--card);
+  border-radius:var(--r-lg);
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
+  z-index:-1;
+}
+
+/* ===== Log add button ===== */
+
+#screen-log .log-input button{
+  padding:12px 18px;
+  font-size:15px;
+  border-radius:12px;
+}
+
+/* ===== History cards ===== */
+
+.history-day{
+  padding:14px 16px;
+}
+
+.history-day strong{
+  font-size:14px;
+  color:var(--muted);
+}
+
+.history-set{
+  margin-top:10px;
+  padding:10px 12px;
+  background:var(--surface);
+  border-radius:12px;
+}
+
+.history-set .icon-btn{
+  background:transparent;
+}
+
+.history-set .icon-btn.delete{
+  color:var(--danger);
+}
+
+
 
 .hidden{display:none;}
