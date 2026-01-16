@@ -159,46 +159,6 @@ button.secondary{
 }
 
 /* =========================================================
-   LOG SCREEN
-   ========================================================= */
-
-#screen-log{
-  position:relative;
-}
-
-#screen-log label{
-  font-size:13px;
-  font-weight:600;
-  color:var(--muted);
-  margin-top:14px;
-  display:block;
-}
-
-/* Log input grouping */
-.log-input{
-  display:flex;
-  gap:10px;
-  margin-top:12px;
-}
-
-.log-input input{ flex:1; }
-.log-input button{ width:auto; }
-
-/* Today log card backdrop */
-#screen-log::before{
-  content:"";
-  position:absolute;
-  top:72px;
-  left:16px;
-  right:16px;
-  height:260px;
-  background:var(--card);
-  border-radius:var(--r-lg);
-  box-shadow:0 8px 24px rgba(0,0,0,.06);
-  z-index:-1;
-}
-
-/* =========================================================
    HISTORY
    ========================================================= */
 
@@ -309,6 +269,17 @@ button.secondary{
 
 .nav-btn.active svg{
   transform:scale(1.15);
+}
+
+/* ===== Log card (real container) ===== */
+
+.log-card{
+  background:var(--card);
+  border-radius:var(--r-lg);
+  padding:16px;
+  margin-bottom:24px;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.06);
 }
 
 /* =========================================================
