@@ -1,40 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
+/* =========================================================
+   GLOBAL RESET & TYPOGRAPHY
+   ========================================================= */
+
 *{
+  box-sizing:border-box;
   font-family:'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+body{
+  margin:0;
+  font-size:16px;
+  line-height:1.4;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* =========================================================
+   DESIGN TOKENS
+   ========================================================= */
+
 :root{
-  /* Backgrounds */
-  --bg:#F6F7FB;              /* app background */
-  --card:#FFFFFF;           /* cards */
-  --surface:#F0F2F7;        /* subtle fills */
+  --bg:#F6F7FB;
+  --card:#FFFFFF;
+  --surface:#F0F2F7;
 
-  /* Text */
-  --text:#1F2937;           /* primary text */
-  --muted:#6B7280;          /* labels / secondary */
+  --text:#1F2937;
+  --muted:#6B7280;
 
-  /* Accent (choose ONE primary) */
-  --accent:#6C5CE7;         /* purple (like reference) */
-  /* alternatives:
-     #F57F5B  → orange
-     #10B981  → teal
-  */
-
+  --accent:#6C5CE7;
   --danger:#EF4444;
 
   --border:rgba(0,0,0,.06);
 
-  /* Radius (clean, modern) */
   --r-lg:18px;
   --r-md:14px;
   --r-sm:10px;
 }
 
 body.dark{
-  --bg:#0F172A;
-  --card:#111827;
-  --surface:#1F2937;
+  --bg:#000000;
+  --card:#0F172A;
+  --surface:#111827;
 
   --text:#E5E7EB;
   --muted:#9CA3AF;
@@ -42,16 +50,9 @@ body.dark{
   --border:rgba(255,255,255,.08);
 }
 
-*{
-  box-sizing:border-box;
-  font-family:'Nunito',sans-serif;
-}
-
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-}
+/* =========================================================
+   SCREEN LAYOUT
+   ========================================================= */
 
 .screen{
   display:none;
@@ -59,7 +60,11 @@ body{
   padding-bottom:90px;
 }
 
-.screen.active{display:block;}
+.screen.active{ display:block; }
+
+/* =========================================================
+   HEADINGS & SECTIONS
+   ========================================================= */
 
 .screen-title{
   font-size:28px;
@@ -69,11 +74,15 @@ body{
 
 .section-title{
   margin:22px 0 10px;
-  font-weight:700;
   font-size:14px;
-  letter-spacing:.3px;
+  font-weight:600;
+  letter-spacing:.06em;
   text-transform:uppercase;
   color:var(--muted);
+}
+
+.section-title.collapsible{
+  cursor:pointer;
 }
 
 .section-title.collapsible::after{
@@ -82,106 +91,120 @@ body{
   color:var(--muted);
 }
 
-input,select,button{
-  width:100%;
-  padding:12px 14px;
-  margin:6px 0;
-  border-radius:var(--r-md);
-  border:1px solid var(--border);
-  background:var(--card);
-  color:var(--text);
-}
+/* =========================================================
+   FORM ELEMENTS
+   ========================================================= */
 
 input,
 select,
 textarea{
-  font-size:16px;          /* fixes Safari zoom */
+  width:100%;
+  padding:12px 14px;
+  margin:6px 0;
+  font-size:16px; /* Safari zoom fix */
   background:#fff;
+  color:var(--text);
+  border-radius:var(--r-md);
   border:1px solid var(--border);
-  border-radius:14px;
 }
 
 button{
+  width:100%;
+  padding:12px 14px;
   border:none;
-  font-weight:700;
-  color:#fff;
-  background:var(--accent); /* fallback */
-}
-
-button{
-  background:var(--accent);
-  color:#fff;
+  border-radius:var(--r-md);
   font-weight:600;
   letter-spacing:.2px;
+  color:#fff;
+  background:var(--accent);
 }
 
+/* Primary button gradient (optional, subtle) */
 button:not(.secondary){
-  background:linear-gradient(
-    180deg,
-    #F89A7A,
-    #F57F5B
-  );
+  background:linear-gradient(180deg,#F89A7A,#F57F5B);
 }
 
+/* Secondary buttons */
 button.secondary{
   background:var(--surface);
   color:var(--text);
   border:1px solid var(--border);
 }
 
-button.secondary{
-  background:var(--surface);
-  color:var(--text);
-}
+/* =========================================================
+   COMMON LAYOUT HELPERS
+   ========================================================= */
 
 .row{
   display:flex;
   gap:10px;
 }
 
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.card,
+.history-day,
 .graph-card{
   background:var(--card);
   border-radius:var(--r-lg);
-  padding:14px;
-  margin:12px 0;
-  border:1px solid var(--border);
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
 }
 
-.metrics{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
+/* Paused card state */
+.card.paused{
+  opacity:.55;
+  filter:saturate(.7);
 }
 
-.metrics div{
-  background:var(--surface);
-  border-radius:var(--r-md);
-  padding:12px;
-  text-align:center;
-  font-weight:700;
+/* =========================================================
+   LOG SCREEN
+   ========================================================= */
+
+#screen-log{
+  position:relative;
 }
 
-.metrics span{
+#screen-log label{
+  font-size:13px;
+  font-weight:600;
+  color:var(--muted);
+  margin-top:14px;
   display:block;
-  font-size:22px;
-  font-weight:800;
-  margin-top:4px;
 }
 
+/* Log input grouping */
 .log-input{
   display:flex;
   gap:10px;
+  margin-top:12px;
 }
 
-.log-input input{flex:1;}
-.log-input button{width:auto;}
+.log-input input{ flex:1; }
+.log-input button{ width:auto; }
+
+/* Today log card backdrop */
+#screen-log::before{
+  content:"";
+  position:absolute;
+  top:72px;
+  left:16px;
+  right:16px;
+  height:260px;
+  background:var(--card);
+  border-radius:var(--r-lg);
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
+  z-index:-1;
+}
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
 
 .history-day{
-  background:var(--card);
-  border-radius:var(--r-md);
-  padding:10px;
+  padding:14px 16px;
   margin-bottom:10px;
-  border:1px solid var(--border);
 }
 
 .history-day strong{
@@ -190,33 +213,68 @@ button.secondary{
 }
 
 .history-set{
+  margin-top:10px;
+  padding:10px 12px;
+  background:var(--surface);
+  border-radius:12px;
   display:flex;
   align-items:center;
-  gap:8px;
-  margin-left:12px;
+  justify-content:space-between;
 }
 
+/* (Icons kept for now – will be replaced with text buttons later) */
 .icon-btn{
-  background:rgba(0,0,0,.04);
+  background:none;
   border:none;
-  padding:6px;
-  border-radius:var(--r-sm);
+  padding:0;
   color:var(--muted);
-  transition:transform .1s ease, background .1s ease;
-}
-
-.icon-btn:active{
-  transform:scale(.95);
-}
-
-.icon-btn svg{
-  width:16px;
-  height:16px;
+  cursor:pointer;
 }
 
 .icon-btn.delete{
   color:var(--danger);
 }
+
+/* =========================================================
+   SUMMARY (ANALYTICS FIRST)
+   ========================================================= */
+
+#screen-summary .row{
+  margin-bottom:16px;
+}
+
+#screen-summary .graph-card{
+  padding:16px;
+}
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin-top:16px;
+}
+
+.metrics div{
+  background:var(--card);
+  border-radius:14px;
+  padding:14px;
+  text-align:left;
+  box-shadow:0 4px 12px rgba(0,0,0,.06);
+  font-size:13px;
+  color:var(--muted);
+}
+
+.metrics span{
+  display:block;
+  margin-top:4px;
+  font-size:22px;
+  font-weight:700;
+  color:var(--text);
+}
+
+/* =========================================================
+   BOTTOM NAVIGATION
+   ========================================================= */
 
 .bottom-nav{
   position:fixed;
@@ -225,8 +283,8 @@ button.secondary{
   right:0;
   display:flex;
   background:var(--surface);
-  box-shadow:0 -6px 20px rgba(0,0,0,.06);
   border-top:1px solid var(--border);
+  box-shadow:0 -6px 20px rgba(0,0,0,.06);
 }
 
 .nav-btn{
@@ -242,6 +300,7 @@ button.secondary{
 .nav-btn svg{
   width:22px;
   height:22px;
+  transition:transform .15s ease, color .15s ease;
 }
 
 .nav-btn.active{
@@ -252,204 +311,9 @@ button.secondary{
   transform:scale(1.15);
 }
 
-.nav-btn svg{
-  transition:transform .15s ease, color .15s ease;
-}
+/* =========================================================
+   UTILITIES
+   ========================================================= */
 
-.card,
-.history-day,
-.graph-card{
-  box-shadow:
-    0 8px 20px rgba(0,0,0,.04),
-    0 2px 6px rgba(0,0,0,.03);
-}
-
-.card,
-.history-day,
-.graph-card{
-  background:var(--card);
-  border-radius:var(--r-lg);
-  box-shadow:
-    0 8px 24px rgba(0,0,0,.06);
-}
-
-.card.paused{
-  opacity:0.5;
-  filter:grayscale(0.6);
-}
-
-.card.paused{
-  opacity:.55;
-  filter:saturate(.7);
-}
-
-.collapsed{
-  display:none;
-}
-
-.section-title.collapsible{
-  cursor:pointer;
-}
-
-#downloadBackup{
-  background:linear-gradient(180deg,#FACA78,#F5B85B);
-  color:#4A3A2A;
-}
-
-#restoreBackup{
-  background:linear-gradient(180deg,#7FD1CB,#68C7C1);
-  color:#0F3F3C;
-}
-
-/* ===== Typography hierarchy (design layer) ===== */
-
-*{
-  font-family:'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-body{
-  font-size:16px;
-  line-height:1.4;
-}
-
-.screen-title{
-  font-weight:800;
-}
-
-.section-title{
-  font-weight:600;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-}
-
-.card strong{
-  font-weight:700;
-}
-
-button{
-  font-weight:600;
-}
-
-/* ===== Log screen labels ===== */
-
-#screen-log label{
-  font-size:13px;
-  font-weight:600;
-  color:var(--muted);
-  margin-top:14px;
-  display:block;
-}
-
-/* ===== Log input grouping ===== */
-
-#screen-log input,
-#screen-log select{
-  background:#fff;
-}
-
-#screen-log .log-input{
-  margin-top:12px;
-}
-
-/* ===== Today log card ===== */
-
-#screen-log{
-  position:relative;
-}
-
-#screen-log::before{
-  content:"";
-  position:absolute;
-  top:72px;
-  left:16px;
-  right:16px;
-  height:260px;
-  background:var(--card);
-  border-radius:var(--r-lg);
-  box-shadow:0 8px 24px rgba(0,0,0,.06);
-  z-index:-1;
-}
-
-/* ===== Log add button ===== */
-
-#screen-log .log-input button{
-  padding:12px 18px;
-  font-size:15px;
-  border-radius:12px;
-}
-
-/* ===== History cards ===== */
-
-.history-day{
-  padding:14px 16px;
-}
-
-.history-day strong{
-  font-size:14px;
-  color:var(--muted);
-}
-
-.history-set{
-  margin-top:10px;
-  padding:10px 12px;
-  background:var(--surface);
-  border-radius:12px;
-}
-
-.history-set .icon-btn{
-  background:transparent;
-}
-
-.history-set .icon-btn.delete{
-  color:var(--danger);
-}
-
-/* ===== Summary screen: analytics foundation ===== */
-
-#screen-summary{
-  background:var(--bg);
-}
-
-/* Section spacing */
-#screen-summary .row{
-  margin-bottom:16px;
-}
-
-/* Summary card base */
-#screen-summary .graph-card{
-  background:var(--card);
-  border-radius:16px;
-  padding:16px;
-  box-shadow:0 8px 24px rgba(0,0,0,.08);
-}
-
-/* Metrics grid: calmer, analytical */
-#screen-summary .metrics{
-  margin-top:16px;
-  gap:12px;
-}
-
-#screen-summary .metrics div{
-  background:var(--card);
-  border-radius:14px;
-  padding:14px;
-  text-align:left;
-  box-shadow:0 4px 12px rgba(0,0,0,.06);
-}
-
-/* Metrics typography */
-
-#screen-summary .metrics div{
-  font-size:13px;
-  color:var(--muted);
-}
-
-#screen-summary .metrics span{
-  display:block;
-  margin-top:4px;
-  font-size:22px;
-  font-weight:700;
-  color:var(--text);
-}
-
-.hidden{display:none;}
+.hidden{ display:none; }
+.collapsed{ display:none; }
