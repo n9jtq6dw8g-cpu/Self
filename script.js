@@ -277,63 +277,54 @@ document.addEventListener("DOMContentLoaded", () => {
     const l = load(LOG);
     const actMap = load(ACT);
     const frag = document.createDocumentFragment();
+    const activeId = sel.value;
 
-    Object.keys(l).sort().reverse().forEach(d => {
-      const day = document.createElement("div");
-      day.className = "history-day";
-      day.innerHTML = `<strong>${formatHistoryDate(d)}</strong>`;
-
-      Object.keys(l[d]).forEach(id => {
-        const act = actMap[id];
-        if (!act) return;
-        const group = document.createElement("div");
-        group.style.marginTop = "8px";
-        group.innerHTML = `<strong>${act.name}</strong>`;
-
-        l[d][id].forEach((v, idx) => {
-          const s = document.createElement("div");
-          s.className = "history-set";
-          s.innerHTML = `
-            <div>
-              <div style="font-weight:700;font-size:16px;">${v}</div>
-              <div style="font-size:12px;color:var(--muted)">${act.unit}</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <button class="secondary edit">✎</button>
-              <button class="secondary delete">🗑</button>
-            </div>
-          `;
-
-          s.querySelector(".edit").onclick = () => {
-            const nv = prompt("Edit value", v);
-            if (nv === null) return;
-            const num = Number(nv);
-            if (isNaN(num) || num < 0) return alert("Invalid value");
-            const logs = load(LOG);
-            logs[d][id][idx] = num;
-            save(LOG, logs);
-            renderHistory();
-            renderSummary();
-          };
-
-          s.querySelector(".delete").onclick = () => {
-            if (!confirm("Delete this entry?")) return;
-            const logs = load(LOG);
-            logs[d][id].splice(idx, 1);
-            if (logs[d][id].length === 0) delete logs[d][id];
-            if (Object.keys(logs[d]).length === 0) delete logs[d];
-            save(LOG, logs);
-            renderHistory();
-            renderSummary();
-          };
-
-          group.appendChild(s);
+    const months = {};
+    Object.keys(l).forEach(d=>{
+      const m = d.slice(0,7); // YYYY-MM
+      months[m] = months[m] || [];
+      months[m].push(d);
+    });
+      
+    Object.keys(months).sort().reverse().forEach(month=>{
+      const monthDiv = document.createElement("div");
+      monthDiv.className = "history-month";
+    
+      const header = document.createElement("h3");
+      header.textContent = month;
+      header.onclick = () => monthDiv.classList.toggle("collapsed");
+    
+      monthDiv.appendChild(header);
+      
+      months[month].sort().reverse().forEach(d=>{
+        const day = document.createElement("div");
+        day.className = "history-day";
+        day.innerHTML = `<strong>${formatHistoryDate(d)}</strong>`;
+    
+        Object.keys(l[d]).forEach(id=>{
+          if(id !== sel.value) return; // show only selected activity
+    
+          const act = a[id];
+          if(!act) return;
+      
+          const group = document.createElement("div");
+          group.style.marginTop = "8px";
+          group.innerHTML = `<strong>${act.name}</strong>`;
+    
+          l[d][id].forEach((v)=>{
+            const s = document.createElement("div");
+            s.className = "history-set";
+            s.innerHTML = `<span>${v} ${act.unit}</span>`;
+            group.appendChild(s);
+          });
+    
+          day.appendChild(group);
         });
-
-        day.appendChild(group);
+    
+        monthDiv.appendChild(day);
       });
-
-      frag.appendChild(day);
+      
+      hist.appendChild(monthDiv);
     });
 
     hist.appendChild(frag);
@@ -352,16 +343,18 @@ document.addEventListener("DOMContentLoaded", () => {
   /* SUMMARY (range-aware, robust) */
 
   // helper: ISO-like week start calculation (Mon start)
-  function getWeekStart(year, week) {
-    // approximate base date for week
-    const simple = new Date(year, 0, 1 + (week - 1) * 7);
-    const dow = simple.getDay(); // 0-sun .. 6-sat
-    // aim for Monday
-    if (dow <= 4) simple.setDate(simple.getDate() - (dow === 0 ? 6 : dow - 1));
-    else simple.setDate(simple.getDate() + (8 - dow));
-    simple.setHours(0, 0, 0, 0);
-    return simple;
+  function getWeekStart(year, week){
+    const d = new Date(year,0,1 + (week-1)*7);
+    const day = d.getDay();
+    const ISOweekStart = d;
+    if(day <= 4)
+      ISOweekStart.setDate(d.getDate() - d.getDay() + 1);
+    else
+      ISOweekStart.setDate(d.getDate() + 8 - d.getDay());
+    ISOweekStart.setHours(0,0,0,0);
+    return ISOweekStart;
   }
+
 
   function dateToKey(dt) { return dt.toISOString().split("T")[0]; }
 
@@ -380,21 +373,35 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // calculate streak (consecutive days with any entry, counting back from today)
-  function calculateStreak(logs, activityId) {
+  function calculateStreak(logs, activity){
     let streak = 0;
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    while (true) {
-      const key = dateToKey(d);
-      if (logs[key] && logs[key][activityId] && logs[key][activityId].length) {
+    let d = new Date();
+    d.setHours(0,0,0,0);
+  
+    while(true){
+      const dayName = d.toLocaleDateString('en-US',{weekday:'short'});
+      const required =
+        activity.frequency === "daily" ||
+        (activity.frequency === "alternate") ||
+        (activity.frequency === "custom" && activity.days.includes(dayName));
+  
+      const key = d.toISOString().split("T")[0];
+  
+      if(!required){
+        d.setDate(d.getDate()-1);
+        continue;
+      }
+  
+      if(logs[key] && logs[key][activity.id]?.length){
         streak++;
-        d.setDate(d.getDate() - 1);
+        d.setDate(d.getDate()-1);
       } else {
         break;
       }
     }
     return streak;
   }
+
 
   // make canvas hi-dpi and sized to container
   function prepareCanvas() {
@@ -459,6 +466,10 @@ document.addEventListener("DOMContentLoaded", () => {
       start = new Date(now);
       start.setDate(now.getDate() - 30);
     }
+   
+    // Force single day only
+    keys = [sDate.value];
+
 
     // build date keys for the period
     const keys = getDateKeysBetween(start, end);
@@ -484,13 +495,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const displayData = data.slice(startIndex, endIndex + 1);
     if (displayData.length === 0) displayData.push(data[Math.floor(data.length / 2)]); // ensure at least 1
 
-    const values = displayData.map(d => d.value);
+    const values = data.map(d => d.value);   // metrics use FULL range
+    const displayValues = displayData.map(d => d.value); // graph only
     const total = values.reduce((a, b) => a + b, 0);
     const avg = values.length ? Math.round(total / values.length) : 0;
     const bestDay = values.length ? Math.max(...values) : 0;
     const bestSet = sets.length ? Math.max(...sets) : 0;
     const activeDays = values.filter(v => v > 0).length;
-    const streak = calculateStreak(logs, id);
+    const act = load(ACT)[id];
+    const streak = calculateStreak(logs, act);
+
 
     // set metrics DOM
     document.getElementById("sTotal").textContent = total;
