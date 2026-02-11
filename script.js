@@ -86,12 +86,24 @@ document.addEventListener("DOMContentLoaded", () => {
       reader.onload = () => {
         try {
           const data = JSON.parse(reader.result);
+
           if (!data.activities || !data.logs) {
             alert("Invalid backup file.");
             return;
           }
+          
+          /* 🧠 Backward compatibility patch */
+          Object.values(data.activities).forEach(a => {
+            if (a.archived === undefined) a.archived = false;
+            if (!a.frequency) a.frequency = "daily";
+            if (!a.days) a.days = [];
+            if (a.active === undefined) a.active = true;
+          });
+          
+          /* Now save */
           localStorage.setItem("activities", JSON.stringify(data.activities));
           localStorage.setItem("logs", JSON.stringify(data.logs));
+
           initUI();
           alert("Backup restored successfully.");
         } catch (e) {
