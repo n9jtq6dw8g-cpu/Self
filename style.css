@@ -183,6 +183,16 @@ main{
   height:22px !important;
 }
 
+.history-month h3{
+  cursor:pointer;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.history-month.collapsed .history-day{
+  display:none;
+}
+
 
 /* -------------------------
    UTILITIES
