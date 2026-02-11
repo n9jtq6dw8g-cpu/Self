@@ -680,4 +680,8 @@ document.addEventListener("DOMContentLoaded", () => {
     resizeTimeout = setTimeout(renderSummary, 150);
   });
 
+   window.addEventListener("load", () => {
+      setTimeout(renderSummary, 80);
+   });
+   
 });
