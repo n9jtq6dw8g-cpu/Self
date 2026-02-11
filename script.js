@@ -1,14 +1,5 @@
 document.addEventListener("DOMContentLoaded",()=>{
 
-const archivedToggle=document.getElementById("archivedToggle");
-const archivedList=document.getElementById("archivedActivityList");
-
-if(archivedToggle){
-  archivedToggle.onclick=()=>{
-    archivedList.classList.toggle("collapsed");
-  };
-}
-
 const ACT="activities", LOG="logs";
 const load=k=>JSON.parse(localStorage.getItem(k))||{};
 const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
@@ -29,87 +20,42 @@ document.getElementById("toggleTheme").onclick=()=>{
   document.body.classList.toggle("dark");
 };
 
-document.getElementById("downloadBackup").onclick = () => {
-  const backup = {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    activities: load(ACT),
-    logs: load(LOG)
-  };
-
-  const blob = new Blob(
-    [JSON.stringify(backup, null, 2)],
-    { type: "application/json" }
-  );
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-
-  a.href = url;
-  a.download = `tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
-
-  document.body.appendChild(a);
-  a.click();
-
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-    a.remove();
-  }, 0);
+/* BACKUP */
+document.getElementById("downloadBackup").onclick=()=>{
+  const blob=new Blob([JSON.stringify({activities:load(ACT),logs:load(LOG)},null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download="tracker-backup.json";
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},100);
 };
 
-document.getElementById("restoreBackup").onclick = () => {
-  if (!confirm(
-    "This will ERASE all current data and replace it with the backup.\n\nContinue?"
-  )) return;
-
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "application/json";
-
-  input.onchange = () => {
-    const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-
-        if (!data.activities || !data.logs) {
-          alert("Invalid backup file.");
-          return;
-        }
-
-        // OVERWRITE restore
-        localStorage.setItem("activities", JSON.stringify(data.activities));
-        localStorage.setItem("logs", JSON.stringify(data.logs));
-
-        // Re-render everything
-        renderActivities();
-        populate();
-        renderHistory();
-        renderSummary();
-
-        alert("Backup restored successfully.");
-      } catch (e) {
-        alert("Failed to read backup file.");
-      }
+document.getElementById("restoreBackup").onclick=()=>{
+  if(!confirm("Overwrite current data?")) return;
+  const input=document.createElement("input");
+  input.type="file";input.accept="application/json";
+  input.onchange=()=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      const d=JSON.parse(r.result);
+      if(!d.activities||!d.logs) return alert("Invalid file");
+      save(ACT,d.activities);save(LOG,d.logs);
+      initUI();
     };
-
-    reader.readAsText(file);
+    r.readAsText(input.files[0]);
   };
-
   input.click();
 };
 
 /* ACTIVITIES */
-const actName = document.getElementById("actName");
+const actName=document.getElementById("actName");
 const actUnit=document.getElementById("actUnit");
 const actStart=document.getElementById("actStart");
 const actEnd=document.getElementById("actEnd");
 const actFreq=document.getElementById("actFreq");
 const weekdays=document.getElementById("weekdays");
 const list=document.getElementById("activityList");
+const archivedList=document.getElementById("archivedActivityList");
 let edit=null;
 
 actFreq.onchange=()=>weekdays.classList.toggle("hidden",actFreq.value!=="custom");
@@ -117,98 +63,31 @@ actFreq.onchange=()=>weekdays.classList.toggle("hidden",actFreq.value!=="custom"
 document.getElementById("saveActivity").onclick=()=>{
   if(!actName.value) return;
   const a=load(ACT);
-  const id = edit ?? actName.value.toLowerCase().replace(/\s+/g,"_");
+  const id=edit??actName.value.toLowerCase().replace(/\s+/g,"_");
   a[id]={id,name:actName.value,unit:actUnit.value,startTime:actStart.value,endTime:actEnd.value,frequency:actFreq.value,days:[...weekdays.querySelectorAll("input:checked")].map(i=>i.value),active:true};
-  save(ACT,a);
-  resetActivityForm();
-  renderActivities();
-};
-
-document.getElementById("cancelEdit").onclick = () => {
-  resetActivityForm();
+  save(ACT,a);resetActivityForm();renderActivities();
 };
 
 function renderActivities(){
-  const acts = load(ACT);
-  list.innerHTML = "";
-  if (archivedList) archivedList.innerHTML = "";
-
-  Object.values(acts).forEach(a=>{
-
-    /* ARCHIVED */
-    if(a.archived){
-      const arc=document.createElement("div");
-      arc.className="card paused";
-      arc.innerHTML=`
-        <strong>${a.name}</strong> (${a.unit})
-        <div class="row" style="margin-top:6px;">
-          <button class="secondary unarchive-btn">Unarchive</button>
-        </div>
-      `;
-      arc.querySelector(".unarchive-btn").onclick=()=>{
-        a.archived=false;
-        a.active=true;
-        save(ACT,acts);
-        renderActivities();
-        populate();
-      };
-      if (archivedList) archivedList.appendChild(arc);
-      return;
-    }
-
-    /* ACTIVE / PAUSED */
+  list.innerHTML="";archivedList.innerHTML="";
+  Object.values(load(ACT)).forEach(a=>{
     const card=document.createElement("div");
     card.className="card"+(a.active?"":" paused");
-
-    card.innerHTML=`
-      <strong>${a.name}</strong> (${a.unit})
-      <div class="row" style="margin-top:8px;">
-        <button class="secondary edit-btn">Edit</button>
-        <button class="secondary toggle-btn">${a.active?"Pause":"Resume"}</button>
-        <button class="secondary archive-btn">Archive</button>
-        <button class="secondary cal-btn">Calendar</button>
-      </div>
-    `;
-
-    card.querySelector(".edit-btn").onclick=()=>{
-      edit=a.id;
-      actName.value=a.name;
-      actUnit.value=a.unit;
-      actStart.value=a.startTime||"";
-      actEnd.value=a.endTime||"";
-      actFreq.value=a.frequency||"daily";
-      weekdays.classList.toggle("hidden",a.frequency!=="custom");
-      weekdays.querySelectorAll("input").forEach(i=>{
-        i.checked=a.days?.includes(i.value);
-      });
-      document.getElementById("cancelEdit").classList.remove("hidden");
-    };
-
-    card.querySelector(".toggle-btn").onclick=()=>{
-      a.active=!a.active;
-      save(ACT,acts);
-      renderActivities();
-      populate();
-    };
-
-    card.querySelector(".archive-btn").onclick=()=>{
-      a.archived=true;
-      a.active=false;
-      save(ACT,acts);
-      renderActivities();
-      populate();
-    };
-
-    card.querySelector(".cal-btn").onclick=()=>{
-      exportCalendar(a);
-    };
-
+    card.innerHTML=`<strong>${a.name}</strong> (${a.unit})
+    <div class="row">
+      <button class="secondary edit-btn">Edit</button>
+      <button class="secondary toggle-btn">${a.active?"Pause":"Resume"}</button>
+      <button class="secondary archive-btn">Archive</button>
+      <button class="secondary cal-btn">Calendar</button>
+    </div>`;
+    card.querySelector(".toggle-btn").onclick=()=>{a.active=!a.active;save(ACT,load(ACT));renderActivities();populate();};
+    card.querySelector(".archive-btn").onclick=()=>{a.archived=true;a.active=false;save(ACT,load(ACT));renderActivities();populate();};
+    card.querySelector(".cal-btn").onclick=()=>exportCalendar(a);
     list.appendChild(card);
   });
-
   populate();
 }
-  
+
 /* LOGGING */
 const date=document.getElementById("logDate");
 date.value=new Date().toISOString().split("T")[0];
@@ -217,416 +96,99 @@ const entry=document.getElementById("logEntry");
 const hist=document.getElementById("logHistory");
 
 function populate(){
-  const summarySel=document.getElementById("summaryActivity");
-  if(!sel || !summarySel) return;
-
-  const a=load(ACT);
-  sel.innerHTML=Object.values(a)
-    .filter(x=>x.active && !x.archived)
-    .map(x=>`<option value="${x.id}">${x.name}</option>`)
-    .join("");
-
-  summarySel.innerHTML=Object.values(a)
-    .filter(x=>!x.archived)
-    .map(x=>`<option value="${x.id}">${x.name}</option>`)
-    .join("");
-
+  sel.innerHTML=Object.values(load(ACT)).filter(x=>x.active&&!x.archived).map(x=>`<option value="${x.id}">${x.name}</option>`).join("");
   renderEntry();
 }
-
-sel.onchange=renderEntry;
 
 function renderEntry(){
   const a=load(ACT)[sel.value];
   if(!a) return;
   entry.innerHTML=`<div class="log-input"><input id="val" type="number" placeholder="${a.unit}"><button>Add</button></div>`;
   entry.querySelector("button").onclick=()=>{
-    const l=load(LOG);
-    const d=date.value;
-    l[d]=l[d]||{};
-    l[d][a.id]=l[d][a.id]||[];
-    l[d][a.id].push(+document.getElementById("val").value);
-    save(LOG,l);
-    document.getElementById("val").value = ""; //
-    renderHistory();
-    renderSummary();
+    const v=document.getElementById("val").value;
+    if(!v||isNaN(v)) return;
+    const l=load(LOG);const d=date.value;
+    l[d]=l[d]||{};l[d][a.id]=l[d][a.id]||[];
+    l[d][a.id].push(Number(v));
+    save(LOG,l);renderHistory();renderSummary();
   };
 }
+sel.onchange=renderEntry;
 
+/* HISTORY (performance optimized) */
 function renderHistory(){
-  const l = load(LOG);
-  const a = load(ACT);
-  hist.innerHTML = "";
-
+  hist.innerHTML="";
+  const frag=document.createDocumentFragment();
+  const l=load(LOG),a=load(ACT);
   Object.keys(l).sort().reverse().forEach(d=>{
-    const day = document.createElement("div");
-    day.className = "history-day";
-    day.innerHTML = `<strong>${formatHistoryDate(d)}</strong>`;
-
+    const day=document.createElement("div");
+    day.className="history-day";
+    day.innerHTML=`<strong>${d}</strong>`;
     Object.keys(l[d]).forEach(id=>{
-      const act = a[id];
-      if(!act) return;
-
-      const group = document.createElement("div");
-      group.style.marginTop = "8px";
-      group.innerHTML = `<strong>${act.name}</strong>`;
-
-      l[d][id].forEach((v, idx)=>{
-        const s = document.createElement("div");
-        s.className = "history-set";
-        s.innerHTML = `
-          <span>${v} ${act.unit}</span>
-          <button class="icon-btn edit">
-            <svg><use xlink:href="#icon-edit"/></svg>
-          </button>
-          <button class="icon-btn delete">
-            <svg><use xlink:href="#icon-delete"/></svg>
-          </button>
-        `;
-
-        s.querySelector(".edit").onclick = ()=>{
-          const nv = prompt("Edit value", v);
-          const num = Number(nv);
-          if (nv === null || isNaN(num) || num < 0) return;
-          l[d][id][idx] = num;
-          save(LOG, l);
-          renderHistory();
-          renderSummary();
-        };
-
-        s.querySelector(".delete").onclick = ()=>{
-          if(!confirm("Delete this entry?")) return;
-          l[d][id].splice(idx,1);
-          if(l[d][id].length === 0) delete l[d][id];
-          if(Object.keys(l[d]).length === 0) delete l[d];
-          save(LOG, l);
-          renderHistory();
-          renderSummary();
-        };
-
+      const group=document.createElement("div");
+      group.innerHTML=`<strong>${a[id]?.name||""}</strong>`;
+      l[d][id].forEach(v=>{
+        const s=document.createElement("div");
+        s.className="history-set";
+        s.textContent=v+" "+a[id].unit;
         group.appendChild(s);
       });
-
       day.appendChild(group);
     });
-
-
-    hist.appendChild(day);
+    frag.appendChild(day);
   });
+  hist.appendChild(frag);
 }
 
-/* SUMMARY */
-const summaryRange = document.getElementById("summaryRange");
-const sDate = document.getElementById("summaryDate");
-const sMonth = document.getElementById("summaryMonth");
-const sYear = document.getElementById("summaryYear");
-const sWeek = document.getElementById("summaryWeek");
-
-  /* populate year dropdown */
-const currentYear = new Date().getFullYear();
-sYear.innerHTML = "";
-for (let y = currentYear; y >= currentYear - 5; y--) {
-  sYear.innerHTML += `<option value="${y}">${y}</option>`;
+/* SUMMARY FIXED WEEK CALC */
+function getWeekStart(year,week){
+  const simple=new Date(year,0,1+(week-1)*7);
+  const dow=simple.getDay();
+  if(dow<=4) simple.setDate(simple.getDate()-simple.getDay()+1);
+  else simple.setDate(simple.getDate()+8-simple.getDay());
+  return simple;
 }
 
-/* populate week dropdown */
-sWeek.innerHTML = "";
-for (let w = 1; w <= 52; w++) {
-  sWeek.innerHTML += `<option value="${w}">Week ${w}</option>`;
-}
-
-
-summaryRange.value = "weekly";
-
-summaryRange.onchange = () => {
-  sDate.classList.add("hidden");
-  sMonth.classList.add("hidden");
-  sYear.classList.add("hidden");
-  sWeek.classList.add("hidden");
-
-  if (summaryRange.value === "daily") sDate.classList.remove("hidden");
-
-  if (summaryRange.value === "weekly") {
-    sYear.classList.remove("hidden");
-    sWeek.classList.remove("hidden");
-  }
-
-  if (summaryRange.value === "monthly") sMonth.classList.remove("hidden");
-  if (summaryRange.value === "yearly") sYear.classList.remove("hidden");
-
-  renderSummary();
-};
-
-document.getElementById("summaryActivity").onchange = renderSummary;
-[sDate, sMonth, sYear].forEach(i => i.onchange = renderSummary);
-
-const graphEl = document.getElementById("summaryGraph");
-const ctx = graphEl ? graphEl.getContext("2d") : null;
+/* GRAPH + METRICS */
+const ctx=document.getElementById("summaryGraph").getContext("2d");
 
 function renderSummary(){
-  if (!ctx) return;
-
-  const id = document.getElementById("summaryActivity").value;
-  if (!id) {
-    ctx.clearRect(0,0,320,180);
-    return;
-  }
-
-  const range = summaryRange.value;
-  const l = load(LOG);
-
-  let start, end;
-
-  if (range === "daily" && sDate.value) {
-    start = new Date(sDate.value);
-    end = new Date(start);
-  }
-  else if (range === "monthly" && sMonth.value) {
-    const [y, m] = sMonth.value.split("-");
-    start = new Date(y, m - 1, 1);
-    end = new Date(y, m, 0);
-  }
-  else if (range === "yearly" && sYear.value) {
-    start = new Date(sYear.value, 0, 1);
-    end = new Date(sYear.value, 11, 31);
-  }
-  else {
-    const now = new Date();
-    now.setHours(0,0,0,0);
-
-    start = new Date(now);
-    if (range === "weekly" && sYear.value && sWeek.value) {
-    const year = Number(sYear.value);
-    const week = Number(sWeek.value);
-
-    start = new Date(year, 0, 1 + (week - 1) * 7);
-    start.setDate(start.getDate() - start.getDay());
-
-    end = new Date(start);
-    end.setDate(start.getDate() + 6);
-  }
-    if (range === "monthly") start = new Date(now.getFullYear(), now.getMonth(), 1);
-    if (range === "yearly") start = new Date(now.getFullYear(), 0, 1);
-    if (range === "all") start = new Date("1970-01-01");
-
-    end = now;
-  }
-
-  let data = [];
-  let sets = [];
-
-  Object.keys(l)
-    .sort()
-    .forEach(d => {
-      const dt = new Date(d);
-      if (dt >= start && dt <= end && l[d][id]) {
-        const sum = l[d][id].reduce((a,b)=>a+b,0);
-        data.push({ date: d, value: sum });
-        l[d][id].forEach(v => sets.push(v));
-      }
-    });
-
-  const values = data.map(x => x.value);
-
-  document.getElementById("sTotal").textContent =
-    values.reduce((a,b)=>a+b,0);
-
-  document.getElementById("sAvg").textContent =
-    values.length ? Math.round(values.reduce((a,b)=>a+b,0)/values.length) : 0;
-
-  document.getElementById("sBest").textContent =
-    Math.max(0, ...values);
-
-  document.getElementById("sBestSet").textContent =
-    Math.max(0, ...sets);
-
-  document.getElementById("sActive").textContent =
-    values.length;
-
-  document.getElementById("sStreak").textContent =
-    calculateStreak(l, id);
-
-  /* DRAW GRAPH */
   ctx.clearRect(0,0,320,180);
-  if (!values.length) return;
-
-  const max = Math.max(...values, 1);
-  const step = values.length > 1 ? 320 / (values.length - 1) : 160;
-
-  /* GRID */
-  ctx.strokeStyle = "rgba(0,0,0,0.08)";
-  ctx.lineWidth = 1;
-  ctx.font = "10px Nunito";
-  ctx.fillStyle = "#888";
-
-  for (let i = 0; i <= 4; i++) {
-    const y = 170 - (i * 140 / 4);
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(320, y);
-    ctx.stroke();
-
-    const value = Math.round((max / 4) * i);
-    ctx.fillText(value, 4, y - 2);
-  }
-
-  /* AREA FILL */
-  const gradient = ctx.createLinearGradient(0, 0, 0, 180);
-  gradient.addColorStop(0, "rgba(245,127,91,.35)");
-  gradient.addColorStop(1, "rgba(245,127,91,0)");
+  const id=document.getElementById("summaryActivity").value;
+  if(!id) return;
+  const l=load(LOG);
+  let values=[];
+  Object.keys(l).forEach(d=>{if(l[d][id]) values.push(l[d][id].reduce((a,b)=>a+b,0));});
+  if(values.length===1) values.push(values[0]);
+  const max=Math.max(...values,1);
+  const step=values.length>1?320/(values.length-1):160;
 
   ctx.beginPath();
-  values.forEach((v,i)=>{
-    const x = i * step;
-    const y = 170 - (v / max) * 140;
-    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
-  });
-  ctx.lineTo(320,170);
-  ctx.lineTo(0,170);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
-  ctx.fill();
-  
-  /* LINE */
-  ctx.beginPath();
-  values.forEach((v,i)=>{
-    const x = i * step;
-    const y = 170 - (v / max) * 140;
-    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
-  });
-  ctx.strokeStyle = "#F57F5B";
-  ctx.lineWidth = 3;
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-  ctx.stroke();
-  
-  /* POINTS */
-  values.forEach((v,i)=>{
-    const x = i * step;
-    const y = 170 - (v / max) * 140;
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = "#fff";
-    ctx.fill();
-    ctx.strokeStyle = "#F57F5B";
-    ctx.stroke();
-  });
+  values.forEach((v,i)=>{const x=i*step,y=170-(v/max)*140;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.strokeStyle="#F57F5B";ctx.lineWidth=3;ctx.stroke();
 
-  ctx.fillStyle = "#888";
-  ctx.font = "10px Nunito";
-
-  data.forEach((d, i) => {
-    // show only ~4 labels to avoid clutter
-    if (i % Math.ceil(data.length / 4) === 0) {
-      const x = i * step;
-      ctx.fillText(d.date.slice(5), x - 10, 178);
-    }
-  });
+  document.getElementById("sTotal").textContent=values.reduce((a,b)=>a+b,0);
+  document.getElementById("sAvg").textContent=Math.round(values.reduce((a,b)=>a+b,0)/values.length)||0;
+  document.getElementById("sBest").textContent=Math.max(...values);
 }
 
+/* CALENDAR FIX */
 function exportCalendar(a){
-  if(!a.startTime || !a.endTime){
-    alert("Please set start and end time for this activity.");
-    return;
-  }
-
-  const start = new Date();
-  const until = new Date();
-  until.setDate(until.getDate() + 90);
-
-  const [sh, sm] = a.startTime.split(":");
-  const [eh, em] = a.endTime.split(":");
-
-  start.setHours(sh, sm, 0, 0);
-  const end = new Date(start);
-  end.setHours(eh, em, 0, 0);
-
-  let r = "FREQ=DAILY";
-  if(a.frequency === "alternate") r = "FREQ=DAILY;INTERVAL=2";
-  if(a.frequency === "custom"){
-    const map = {Mon:"MO",Tue:"TU",Wed:"WE",Thu:"TH",Fri:"FR",Sat:"SA",Sun:"SU"};
-    r = "FREQ=WEEKLY;BYDAY=" + (a.days || []).map(d => map[d]).join(",");
-  }
-
-  r += ";UNTIL=" + until.toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
-
-  const ics = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "BEGIN:VEVENT",
-    `SUMMARY:${a.name}`,
-    `DTSTART:${start.toISOString().replace(/[-:]/g,"").split(".")[0]}Z`,
-    `DTEND:${end.toISOString().replace(/[-:]/g,"").split(".")[0]}Z`,
-    `RRULE:${r}`,
-    "END:VEVENT",
-    "END:VCALENDAR"
-  ].join("\n");
-
-  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${a.name}.ics`;
-  document.body.appendChild(link);
-  link.click();
-
-  setTimeout(()=>{
-    URL.revokeObjectURL(url);
-    link.remove();
-  }, 0);
+  if(!a.startTime||!a.endTime) return alert("Set times first");
+  const start=new Date();const until=new Date();until.setDate(until.getDate()+90);
+  const [sh,sm]=a.startTime.split(":"),[eh,em]=a.endTime.split(":");
+  start.setHours(sh,sm,0,0);const end=new Date(start);end.setHours(eh,em);
+  let r="FREQ=DAILY";if(a.frequency==="alternate")r="FREQ=DAILY;INTERVAL=2";
+  const ics=`BEGIN:VCALENDAR\nBEGIN:VEVENT\nSUMMARY:${a.name}\nDTSTART:${start.toISOString().replace(/[-:]/g,"").split(".")[0]}Z\nDTEND:${end.toISOString().replace(/[-:]/g,"").split(".")[0]}Z\nRRULE:${r};UNTIL=${until.toISOString().replace(/[-:]/g,"").split(".")[0]}Z\nEND:VEVENT\nEND:VCALENDAR`;
+  const blob=new Blob([ics],{type:"text/calendar"});const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");link.href=url;link.download=a.name+".ics";
+  document.body.appendChild(link);link.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);link.remove();},100);
 }
 
-function resetActivityForm(){
-  edit = null;
-  actName.value = "";
-  actUnit.value = "count";
-  actStart.value = "";
-  actEnd.value = "";
-  actFreq.value = "daily";
-  weekdays.classList.add("hidden");
-  weekdays.querySelectorAll("input").forEach(i=>i.checked=false);
-  document.getElementById("cancelEdit").classList.add("hidden");
-}
+function resetActivityForm(){edit=null;actName.value="";actUnit.value="count";actStart.value="";actEnd.value="";actFreq.value="daily";weekdays.classList.add("hidden");}
 
-function formatHistoryDate(d){
-  const date=new Date(d);
-  const today=new Date();
-  today.setHours(0,0,0,0);
-
-  const diff=(today - date)/(1000*60*60*24);
-
-  if(diff===0) return "Today";
-  if(diff===1) return "Yesterday";
-
-  return date.toLocaleDateString(undefined,{
-    day:"numeric",
-    month:"short",
-    year:"numeric"
-  });
-}
-
-function calculateStreak(logs, activityId){
-  let streak = 0;
-  const d = new Date();
-  d.setHours(0,0,0,0);
-
-  while(true){
-    const key = d.toISOString().split("T")[0];
-    if(logs[key] && logs[key][activityId]?.length){
-      streak++;
-      d.setDate(d.getDate() - 1);
-    }else{
-      break;
-    }
-  }
-  return streak;
-}
-
-/* INIT */
-renderActivities();
-populate();
-renderHistory();
-renderSummary();
+function initUI(){renderActivities();populate();renderHistory();renderSummary();}
+initUI();
 
 });
