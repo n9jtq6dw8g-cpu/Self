@@ -32,10 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("summaryGraph");
 
   /* UI Defaults */
-  dateEl.value = new Date().toISOString().split("T")[0];
+  dateEl.value = parseDateKey().toISOString().split("T")[0];
 
   /* Populate years/weeks/months*/
-  const currentYear = new Date().getFullYear();
+  const currentYear = parseDateKey().getFullYear();
   sYear.innerHTML = "";
   for (let y = currentYear; y >= currentYear - 5; y--) {
     sYear.innerHTML += `<option value="${y}">${y}</option>`;
@@ -63,12 +63,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* BACKUP buttons (keeps existing behavior, slightly safer revoke) */
   document.getElementById("downloadBackup").onclick = () => {
-    const backup = { version: 1, exportedAt: new Date().toISOString(), activities: load(ACT), logs: load(LOG) };
+    const backup = { version: 1, exportedAt: parseDateKey().toISOString(), activities: load(ACT), logs: load(LOG) };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tracker-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `tracker-backup-${parseDateKey().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 150);
@@ -147,6 +147,12 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   document.getElementById("cancelEdit").onclick = resetActivityForm;
+
+
+  function parseDateKey(key){
+    const [y,m,d] = key.split("-").map(Number);
+    return parseDateKey(y, m-1, d);
+  }
 
   function renderActivities() {
     const acts = load(ACT);
@@ -343,8 +349,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function formatHistoryDate(d) {
-    const date = new Date(d);
-    const today = new Date();
+    const date = parseDateKey(d);
+    const today = parseDateKey();
     today.setHours(0, 0, 0, 0);
     const diff = Math.round((today - date) / (1000 * 60 * 60 * 24));
     if (diff === 0) return "Today";
@@ -356,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // helper: ISO-like week start calculation (Mon start)
   function getWeekStart(year, week){
-    const d = new Date(year,0,1 + (week-1)*7);
+    const d = parseDateKey(year,0,1 + (week-1)*7);
     const day = d.getDay();
     const ISOweekStart = d;
     if(day <= 4)
@@ -373,9 +379,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // get inclusive list of date keys between start and end
   function getDateKeysBetween(start, end) {
     const keys = [];
-    const d = new Date(start);
+    const d = parseDateKey(start);
     d.setHours(0, 0, 0, 0);
-    const last = new Date(end);
+    const last = parseDateKey(end);
     last.setHours(0, 0, 0, 0);
     while (d <= last) {
       keys.push(dateToKey(d));
@@ -387,7 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // calculate streak (consecutive days with any entry, counting back from today)
   function calculateStreak(logs, activity){
     let streak = 0;
-    let d = new Date();
+    let d = parseDateKey();
     d.setHours(0,0,0,0);
   
     while(true){
@@ -397,7 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
         (activity.frequency === "alternate") ||
         (activity.frequency === "custom" && activity.days.includes(dayName));
   
-      const key = d.toISOString().split("T")[0];
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   
       if(!required){
         d.setDate(d.getDate()-1);
@@ -440,42 +446,42 @@ document.addEventListener("DOMContentLoaded", () => {
     // determine range start/end
     const range = summaryRange.value;
     let start, end;
-    const now = new Date();
+    const now = parseDateKey();
     now.setHours(0, 0, 0, 0);
 
     if (range === "daily" && sDate.value) {
-      start = new Date(sDate.value);
-      end = new Date(sDate.value);
+      start = parseDateKey(sDate.value);
+      end = parseDateKey(sDate.value);
     } else if (range === "weekly") {
       if (sYear.value && sWeek.value) {
         start = getWeekStart(Number(sYear.value), Number(sWeek.value));
-        end = new Date(start);
+        end = parseDateKey(start);
         end.setDate(start.getDate() + 6);
       } else {
         // default: current week (Mon-Sun)
-        const c = new Date();
+        const c = parseDateKey();
         const dow = c.getDay();
-        const monday = new Date(c);
+        const monday = parseDateKey(c);
         monday.setDate(c.getDate() - (dow === 0 ? 6 : dow - 1));
         monday.setHours(0, 0, 0, 0);
         start = monday;
-        end = new Date(start);
+        end = parseDateKey(start);
         end.setDate(start.getDate() + 6);
       }
     } else if (range === "monthly" && sMonth.value) {
       const [y, m] = sMonth.value.split("-");
-      start = new Date(Number(y), Number(m) - 1, 1);
-      end = new Date(Number(y), Number(m), 0);
+      start = parseDateKey(Number(y), Number(m) - 1, 1);
+      end = parseDateKey(Number(y), Number(m), 0);
     } else if (range === "yearly" && sYear.value) {
-      start = new Date(Number(sYear.value), 0, 1);
-      end = new Date(Number(sYear.value), 11, 31);
+      start = parseDateKey(Number(sYear.value), 0, 1);
+      end = parseDateKey(Number(sYear.value), 11, 31);
     } else if (range === "all") {
-      start = new Date("1970-01-01");
+      start = parseDateKey("1970-01-01");
       end = now;
     } else {
       // default window = last ~30 days
       end = now;
-      start = new Date(now);
+      start = parseDateKey(now);
       start.setDate(now.getDate() - 30);
     }
    
@@ -629,14 +635,14 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Please set start and end time for this activity.");
       return;
     }
-    const start = new Date();
-    const until = new Date();
+    const start = parseDateKey();
+    const until = parseDateKey();
     until.setDate(until.getDate() + 90);
 
     const [sh, sm] = a.startTime.split(":");
     const [eh, em] = a.endTime.split(":");
     start.setHours(sh, sm, 0, 0);
-    const end = new Date(start);
+    const end = parseDateKey(start);
     end.setHours(eh, em, 0, 0);
 
     let r = "FREQ=DAILY";
