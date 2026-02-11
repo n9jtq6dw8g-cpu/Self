@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date();
   dateEl.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
 
+
   /* Populate years/weeks/months*/
   const currentYear = new Date().getFullYear();
   sYear.innerHTML = "";
@@ -393,6 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function dateToKey(dt) {
     return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
   }
+
 
 
   // get inclusive list of date keys between start and end
