@@ -32,7 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("summaryGraph");
 
   /* UI Defaults */
-  dateEl.value = new Date().toISOString().split("T")[0];
+  const today = new Date();
+  dateEl.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
 
   /* Populate years/weeks/months*/
   const currentYear = new Date().getFullYear();
@@ -389,7 +390,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return d;
   }
 
-  function dateToKey(dt) { return dt.toISOString().split("T")[0]; }
+  function dateToKey(dt) {
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+  }
+
 
   // get inclusive list of date keys between start and end
   function getDateKeysBetween(start, end) {
