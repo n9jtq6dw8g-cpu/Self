@@ -32,10 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("summaryGraph");
 
   /* UI Defaults */
-  dateEl.value = parseDateKey().toISOString().split("T")[0];
+  dateEl.value = new Date().toISOString().split("T")[0];
 
   /* Populate years/weeks/months*/
-  const currentYear = parseDateKey().getFullYear();
+  const currentYear = new Date().getFullYear();
   sYear.innerHTML = "";
   for (let y = currentYear; y >= currentYear - 5; y--) {
     sYear.innerHTML += `<option value="${y}">${y}</option>`;
@@ -150,8 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   function parseDateKey(key){
+    if(!key) return new Date();              // fallback for "today"
     const [y,m,d] = key.split("-").map(Number);
-    return parseDateKey(y, m-1, d);
+    return new Date(y, m-1, d);              // correct constructor
   }
 
   function renderActivities() {
@@ -322,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
         Object.keys(l[d]).forEach(id=>{
           if(id !== sel.value) return; // show only selected activity
     
-          const act = a[id];
+          const act = actMap[id];
           if(!act) return;
       
           const group = document.createElement("div");
@@ -362,17 +363,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // helper: ISO-like week start calculation (Mon start)
   function getWeekStart(year, week){
-    const d = parseDateKey(year,0,1 + (week-1)*7);
+    const d = new Date(year, 0, 1 + (week - 1) * 7);
     const day = d.getDay();
-    const ISOweekStart = d;
-    if(day <= 4)
-      ISOweekStart.setDate(d.getDate() - d.getDay() + 1);
-    else
-      ISOweekStart.setDate(d.getDate() + 8 - d.getDay());
-    ISOweekStart.setHours(0,0,0,0);
-    return ISOweekStart;
+    if(day <= 4) d.setDate(d.getDate() - d.getDay() + 1);
+    else d.setDate(d.getDate() + 8 - d.getDay());
+    d.setHours(0,0,0,0);
+    return d;
   }
-
 
   function dateToKey(dt) { return dt.toISOString().split("T")[0]; }
 
@@ -484,9 +481,6 @@ document.addEventListener("DOMContentLoaded", () => {
       start = parseDateKey(now);
       start.setDate(now.getDate() - 30);
     }
-   
-    // Force single day only
-    keys = [sDate.value];
 
 
     // build date keys for the period
