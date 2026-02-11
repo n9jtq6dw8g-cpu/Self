@@ -99,6 +99,24 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!a.days) a.days = [];
             if (a.active === undefined) a.active = true;
           });
+
+          const acts = data.activities;
+          const logs = data.logs;
+          
+          Object.keys(logs).forEach(date => {
+            Object.keys(logs[date]).forEach(logId => {
+              if (!acts[logId]) {
+                const match = Object.values(acts).find(a =>
+                  a.name.toLowerCase().replace(/\s+/g,"") ===
+                  logId.toLowerCase().replace(/[_\s]+/g,"")
+                );
+                if (match) {
+                  logs[date][match.id] = logs[date][logId];
+                  delete logs[date][logId];
+                }
+              }
+            });
+          });
           
           /* Now save */
           localStorage.setItem("activities", JSON.stringify(data.activities));
