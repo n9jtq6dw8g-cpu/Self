@@ -169,11 +169,31 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("cancelEdit").onclick = resetActivityForm;
 
 
-  function parseDateKey(key){
-    if(!key) return new Date();              // fallback for "today"
-    const [y,m,d] = key.split("-").map(Number);
-    return new Date(y, m-1, d);              // correct constructor
+  function parseDateKey(a, b, c){
+    // no args -> today
+    if (a === undefined) return new Date();
+  
+    // a is a Date
+    if (a instanceof Date) return new Date(a.getFullYear(), a.getMonth(), a.getDate());
+   
+    // called as parseDateKey("yyyy-mm-dd")
+    if (typeof a === "string") {
+      const parts = a.split("-").map(Number);
+      if (parts.length === 3 && parts.every(n => !Number.isNaN(n))) {
+        return new Date(parts[0], parts[1]-1, parts[2]);
+      }
+    }
+  
+    // called as parseDateKey(year, monthIndex, day)
+    if (typeof a === "number" && typeof b === "number") {
+      const day = (typeof c === "number") ? c : 1;
+      return new Date(a, b, day);
+    }
+  
+    // fallback
+    return new Date(a);
   }
+
 
   function renderActivities() {
     const acts = load(ACT);
@@ -456,7 +476,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderSummary() {
     const ctx = prepareCanvas();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
     const id = summaryActivity.value;
     if (!id) {
@@ -531,8 +551,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const displayData = data.slice(startIndex, endIndex + 1);
     if (displayData.length === 0) displayData.push(data[Math.floor(data.length / 2)]); // ensure at least 1
 
-    const values = data.map(d => d.value);   // metrics use FULL range
-    const displayValues = displayData.map(d => d.value); // graph only
+    const values = data.map(d => d.value);        // metrics use FULL range
+    const plotValues = displayData.map(d => d.value); // graph uses trimmed range
     const total = values.reduce((a, b) => a + b, 0);
     const avg = values.length ? Math.round(total / values.length) : 0;
     const bestDay = values.length ? Math.max(...values) : 0;
@@ -564,8 +584,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const plotW = w - padding.left - padding.right;
     const plotH = h - padding.top - padding.bottom;
 
-    const max = Math.max(...values, 1);
-    const stepX = values.length > 1 ? plotW / (values.length - 1) : plotW / 2;
+    const max = Math.max(...values, 1); // keep scale based on full data
+    const stepX = plotValues.length > 1 ? plotW / (plotValues.length - 1) : plotW / 2;
 
     // GRID
     ctx.strokeStyle = "rgba(0,0,0,0.06)";
@@ -584,8 +604,8 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.fillText(gridVal.toString(), 6, y + 4);
     }
 
-    // compute points
-    const points = values.map((v, i) => {
+    // compute points from plotValues
+    const points = plotValues.map((v, i) => {
       const x = padding.left + i * stepX;
       const y = padding.top + plotH - (v / max) * plotH;
       return { x, y, v };
