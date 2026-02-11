@@ -157,6 +157,32 @@ main{
   align-items:center;
 }
 
+/* Lock graph size */
+.graph-card{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+}
+
+#summaryGraph{
+  width:100% !important;
+  height:180px !important;   /* fixed visual height */
+  display:block;
+}
+
+.nav-btn{
+  color:var(--muted);  /* this brings icons back */
+}
+
+.nav-btn.active{
+  color:var(--accent);
+}
+
+.bottom-nav svg{
+  width:22px !important;
+  height:22px !important;
+}
+
 
 /* -------------------------
    UTILITIES
