@@ -116,12 +116,47 @@ body.dark .card, body.dark .log-card, body.dark .history-day, body.dark .graph-c
    BOTTOM NAV
    ------------------------- */
 .bottom-nav{
-  position:fixed; left:12px; right:12px; bottom:16px; display:flex; gap:12px;
-  padding:10px; border-radius:28px; background:var(--card); box-shadow:0 18px 40px rgba(12,14,20,0.06); border:1px solid var(--border);
-  justify-content:space-between; align-items:center;
+  position:fixed;
+  left:16px;
+  right:16px;
+  bottom:16px;
+  height:64px;                  /* lock height */
+  display:flex;
+  gap:8px;
+  padding:8px;
+  border-radius:32px;
+  background:var(--card);
+  border:1px solid var(--border);
+  box-shadow:0 12px 28px rgba(0,0,0,.08);
+  align-items:center;
+  justify-content:space-between;
+  z-index:9999;                 /* stay above content */
 }
-.nav-btn{ flex:1; border:none; background:transparent; padding:8px 0; color:var(--muted); display:flex; align-items:center; justify-content:center; }
-.nav-btn.active{ color:var(--accent); transform:translateY(-2px); }
+
+.nav-btn svg{
+  width:22px;
+  height:22px;
+  transition:transform .15s ease;
+}
+
+.nav-btn.active svg{
+  transform:scale(1.1);   /* subtle only */
+}
+
+main{
+  padding-bottom:120px;   /* makes room for fixed nav */
+}
+
+.nav-btn{
+  pointer-events:auto;
+  background:none;
+  border:none;
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
 
 /* -------------------------
    UTILITIES
