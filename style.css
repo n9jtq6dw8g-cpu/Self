@@ -52,6 +52,7 @@ body.dark{
    ------------------------- */
 input, select, textarea{
   width:100%;
+  max-width:100%;
   padding:12px 14px;
   margin:6px 0;
   font-size:15px;
@@ -90,9 +91,10 @@ body.dark .card, body.dark .log-card, body.dark .history-day, body.dark .graph-c
 .card.paused{ opacity:.55; filter:saturate(.8); }
 
 /* -------------------------
-   SUMMARY LAYOUT
+   LAYOUT UTILS
    ------------------------- */
-#screen-summary .row{ display:flex; gap:10px; align-items:center; margin-bottom:12px; }
+.row{ display:flex; gap:10px; align-items:center; margin-bottom:12px; }
+.row > * { flex:1; min-width:0; } /* ensure items share space and don't overflow */
 
 .graph-card{ padding:18px; margin-bottom:16px; }
 
@@ -111,6 +113,16 @@ body.dark .card, body.dark .log-card, body.dark .history-day, body.dark .graph-c
 /* small icon buttons inside history */
 .history-set button{ background:none; border:none; padding:6px 8px; border-radius:8px; cursor:pointer; color:var(--muted); }
 .history-set button:hover{ transform:translateY(-1px); }
+
+.history-set .actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.history-set .actions button {
+  padding: 4px;
+}
 
 /* -------------------------
    BOTTOM NAV
@@ -187,9 +199,12 @@ main{
   cursor:pointer;
   color:var(--muted);
   margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 
-.history-month.collapsed .history-day{
+.history-month.month-collapsed .history-day{
   display:none;
 }
 

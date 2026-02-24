@@ -357,8 +357,12 @@ document.addEventListener("DOMContentLoaded", () => {
       monthDiv.className = "history-month";
     
       const header = document.createElement("h3");
-      header.textContent = month;
-      header.onclick = () => monthDiv.classList.toggle("collapsed");
+      header.innerHTML = `<span>▼</span> ${month}`;
+
+      header.onclick = () => {
+        const isCollapsed = monthDiv.classList.toggle("month-collapsed");
+        header.querySelector("span").textContent = isCollapsed ? "▶" : "▼";
+      };
     
       monthDiv.appendChild(header);
       
@@ -380,7 +384,25 @@ document.addEventListener("DOMContentLoaded", () => {
           l[d][id].forEach((v, idx)=>{
             const s = document.createElement("div");
             s.className = "history-set";
-            s.innerHTML = `<span>${v} ${act.unit}</span><button class="delete-btn" style="margin-left:auto; cursor:pointer;">×</button>`;
+            s.innerHTML = `
+              <span>${v} ${act.unit}</span>
+              <div class="actions">
+                <button class="edit-btn">✎</button>
+                <button class="delete-btn">×</button>
+              </div>
+            `;
+
+            s.querySelector(".edit-btn").onclick = () => {
+              const newVal = prompt("Enter new value:", v);
+              if (newVal === null || newVal === "") return;
+              const num = Number(newVal);
+              if (isNaN(num) || num < 0) return alert("Invalid number");
+              const logs = load(LOG);
+              logs[d][id][idx] = num;
+              save(LOG, logs);
+              renderHistory();
+              renderSummary();
+            };
 
             s.querySelector(".delete-btn").onclick = () => {
               if (!confirm("Delete this entry?")) return;
@@ -672,17 +694,30 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.stroke();
     });
 
-    // X LABELS - show ~4 evenly distributed labels
+    // X LABELS - show based on range
     ctx.fillStyle = "#9AA0A6";
     ctx.font = "11px Nunito";
-    const labelCount = Math.min(4, displayData.length);
-    if (labelCount > 0) {
-      for (let i = 0; i < displayData.length; i++) {
-        if (i % Math.ceil(displayData.length / labelCount) === 0) {
-          const x = padding.left + (i * stepX);
-          const txt = displayData[i].date.slice(5); // mm-dd
-          ctx.fillText(txt, x - 16, padding.top + plotH + 20);
+
+    if (displayData.length > 0) {
+      const labelCount = Math.min(6, displayData.length);
+      const step = Math.ceil(displayData.length / labelCount);
+
+      for (let i = 0; i < displayData.length; i += step) {
+        const x = padding.left + (i * stepX);
+        const dt = parseDateKey(displayData[i].date);
+        let txt = "";
+
+        if (range === "yearly") {
+          txt = dt.toLocaleDateString(undefined, { month: 'short' });
+        } else if (range === "weekly") {
+          txt = dt.toLocaleDateString(undefined, { weekday: 'short' });
+        } else if (range === "monthly") {
+          txt = dt.getDate().toString();
+        } else {
+          txt = displayData[i].date.slice(5); // mm-dd
         }
+
+        ctx.fillText(txt, x - 10, padding.top + plotH + 20);
       }
     }
   }
