@@ -121,8 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           
           /* Now save */
-          localStorage.setItem("activities", JSON.stringify(data.activities));
-          localStorage.setItem("logs", JSON.stringify(data.logs));
+          localStorage.setItem(ACT, JSON.stringify(data.activities));
+          localStorage.setItem(LOG, JSON.stringify(data.logs));
 
           initUI();
           alert("Backup restored successfully.");
@@ -151,6 +151,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!actName.value) return;
     const a = load(ACT);
     const id = edit ?? actName.value.toLowerCase().replace(/\s+/g, "_");
+
+    if (!edit && a[id]) {
+      if (!confirm(`An activity named "${actName.value}" already exists. Overwrite?`)) return;
+    }
+
     a[id] = {
       id,
       name: actName.value,
@@ -290,7 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .join("");
 
     summaryActivity.innerHTML = Object.values(a)
-      .filter(x => !x.archived)
       .map(x => `<option value="${x.id}">${x.name}</option>`)
       .join("");
 
@@ -301,7 +305,10 @@ document.addEventListener("DOMContentLoaded", () => {
     renderEntry();
   }
 
-  sel.onchange = renderEntry;
+  sel.onchange = () => {
+    renderEntry();
+    renderHistory();
+  };
 
   function renderEntry() {
     const a = load(ACT)[sel.value];
@@ -370,10 +377,22 @@ document.addEventListener("DOMContentLoaded", () => {
           group.style.marginTop = "8px";
           group.innerHTML = `<strong>${act.name}</strong>`;
     
-          l[d][id].forEach((v)=>{
+          l[d][id].forEach((v, idx)=>{
             const s = document.createElement("div");
             s.className = "history-set";
-            s.innerHTML = `<span>${v} ${act.unit}</span>`;
+            s.innerHTML = `<span>${v} ${act.unit}</span><button class="delete-btn" style="margin-left:auto; cursor:pointer;">×</button>`;
+
+            s.querySelector(".delete-btn").onclick = () => {
+              if (!confirm("Delete this entry?")) return;
+              const logs = load(LOG);
+              logs[d][id].splice(idx, 1);
+              if (logs[d][id].length === 0) delete logs[d][id];
+              if (Object.keys(logs[d]).length === 0) delete logs[d];
+              save(LOG, logs);
+              renderHistory();
+              renderSummary();
+            };
+
             group.appendChild(s);
           });
     
@@ -383,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
         monthDiv.appendChild(day);
       });
       
-      hist.appendChild(monthDiv);
+      frag.appendChild(monthDiv);
     });
 
     hist.appendChild(frag);
@@ -433,6 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // calculate streak (consecutive days with any entry, counting back from today)
   function calculateStreak(logs, activity){
+    if (!activity) return 0;
     let streak = 0;
     let d = parseDateKey();
     d.setHours(0,0,0,0);
@@ -455,6 +475,11 @@ document.addEventListener("DOMContentLoaded", () => {
         streak++;
         d.setDate(d.getDate()-1);
       } else {
+        // if today and haven't logged yet, don't break the streak
+        if (dateToKey(d) === dateToKey(new Date()) && streak === 0) {
+          d.setDate(d.getDate() - 1);
+          continue;
+        }
         break;
       }
     }
@@ -545,10 +570,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // remove leading/trailing zeros for visual compactness while keeping at least 1 point
-    let startIndex = 0, endIndex = data.length - 1;
-    while (startIndex < endIndex && data[startIndex].value === 0) startIndex++;
-    while (endIndex > startIndex && data[endIndex].value === 0) endIndex--;
-    const displayData = data.slice(startIndex, endIndex + 1);
+    // but only if range is "all" or "default" (not fixed ranges like weekly/monthly/etc)
+    let displayData = data;
+    if (range === "all" || !range) {
+      let startIndex = 0, endIndex = data.length - 1;
+      while (startIndex < endIndex && data[startIndex].value === 0) startIndex++;
+      while (endIndex > startIndex && data[endIndex].value === 0) endIndex--;
+      displayData = data.slice(startIndex, endIndex + 1);
+    }
     if (displayData.length === 0) displayData.push(data[Math.floor(data.length / 2)]); // ensure at least 1
 
     const values = data.map(d => d.value);        // metrics use FULL range
