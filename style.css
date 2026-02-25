@@ -90,9 +90,14 @@ body.dark .card, body.dark .log-card, body.dark .history-day, body.dark .graph-c
 .card.paused{ opacity:.55; filter:saturate(.8); }
 
 /* -------------------------
+   UTILITIES / LAYOUT
+   ------------------------- */
+.row{ display:flex; gap:10px; align-items:center; margin-bottom:12px; }
+.row > * { flex:1; margin:0 !important; }
+
+/* -------------------------
    SUMMARY LAYOUT
    ------------------------- */
-#screen-summary .row{ display:flex; gap:10px; align-items:center; margin-bottom:12px; }
 
 .graph-card{ padding:18px; margin-bottom:16px; }
 
@@ -189,7 +194,7 @@ main{
   margin-bottom:8px;
 }
 
-.history-month.collapsed .history-day{
+.history-month.month-collapsed .history-day{
   display:none;
 }
 
