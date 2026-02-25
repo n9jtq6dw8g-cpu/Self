@@ -358,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
       const header = document.createElement("h3");
       header.textContent = month;
-      header.onclick = () => monthDiv.classList.toggle("collapsed");
+      header.onclick = () => monthDiv.classList.toggle("month-collapsed");
     
       monthDiv.appendChild(header);
       
@@ -380,7 +380,26 @@ document.addEventListener("DOMContentLoaded", () => {
           l[d][id].forEach((v, idx)=>{
             const s = document.createElement("div");
             s.className = "history-set";
-            s.innerHTML = `<span>${v} ${act.unit}</span><button class="delete-btn" style="margin-left:auto; cursor:pointer;">×</button>`;
+            s.innerHTML = `
+              <span>${v} ${act.unit}</span>
+              <div style="margin-left:auto; display:flex; gap:5px;">
+                <button class="edit-btn" title="Edit">✎</button>
+                <button class="delete-btn" title="Delete">×</button>
+              </div>
+            `;
+
+            s.querySelector(".edit-btn").onclick = () => {
+              const newVal = prompt("Edit value:", v);
+              if (newVal === null || newVal === "") return;
+              const num = Number(newVal);
+              if (isNaN(num) || num < 0) return alert("Enter a valid number");
+
+              const logs = load(LOG);
+              logs[d][id][idx] = num;
+              save(LOG, logs);
+              renderHistory();
+              renderSummary();
+            };
 
             s.querySelector(".delete-btn").onclick = () => {
               if (!confirm("Delete this entry?")) return;
@@ -672,16 +691,43 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.stroke();
     });
 
-    // X LABELS - show ~4 evenly distributed labels
+    // X LABELS
     ctx.fillStyle = "#9AA0A6";
     ctx.font = "11px Nunito";
-    const labelCount = Math.min(4, displayData.length);
-    if (labelCount > 0) {
-      for (let i = 0; i < displayData.length; i++) {
-        if (i % Math.ceil(displayData.length / labelCount) === 0) {
+
+    if (range === "weekly") {
+      displayData.forEach((d, i) => {
+        const x = padding.left + (i * stepX);
+        const date = parseDateKey(d.date);
+        const txt = date.toLocaleDateString(undefined, { weekday: "short" });
+        ctx.fillText(txt, x - 12, padding.top + plotH + 20);
+      });
+    } else if (range === "monthly") {
+      displayData.forEach((d, i) => {
+        const dayNum = Number(d.date.split("-")[2]);
+        if (dayNum === 1 || dayNum % 5 === 0 || i === displayData.length - 1) {
           const x = padding.left + (i * stepX);
-          const txt = displayData[i].date.slice(5); // mm-dd
-          ctx.fillText(txt, x - 16, padding.top + plotH + 20);
+          ctx.fillText(dayNum.toString(), x - 6, padding.top + plotH + 20);
+        }
+      });
+    } else if (range === "yearly") {
+      displayData.forEach((d, i) => {
+        const date = parseDateKey(d.date);
+        if (date.getDate() === 1) {
+          const x = padding.left + (i * stepX);
+          const txt = date.toLocaleDateString(undefined, { month: "short" });
+          ctx.fillText(txt, x - 12, padding.top + plotH + 20);
+        }
+      });
+    } else {
+      const labelCount = Math.min(4, displayData.length);
+      if (labelCount > 0) {
+        for (let i = 0; i < displayData.length; i++) {
+          if (i % Math.ceil(displayData.length / labelCount) === 0) {
+            const x = padding.left + (i * stepX);
+            const txt = displayData[i].date.slice(5); // mm-dd
+            ctx.fillText(txt, x - 16, padding.top + plotH + 20);
+          }
         }
       }
     }

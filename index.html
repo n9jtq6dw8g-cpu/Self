@@ -59,11 +59,16 @@
     <h1 class="screen-title">Log</h1>
   
     <div class="log-card">
-      <label>Date</label>
-      <input type="date" id="logDate">
-  
-      <label>Activity</label>
-      <select id="logActivity"></select>
+      <div class="row">
+        <div>
+          <label style="font-size:12px; color:var(--muted); font-weight:700;">Date</label>
+          <input type="date" id="logDate">
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--muted); font-weight:700;">Activity</label>
+          <select id="logActivity"></select>
+        </div>
+      </div>
   
       <div id="logEntry"></div>
     </div>
@@ -111,16 +116,19 @@
   <section id="screen-profile" class="screen">
     <h1 class="screen-title">Profile</h1>
 
-    <input id="actName" placeholder="Activity name">
+    <div class="row">
+      <input id="actName" placeholder="Activity name">
+      <select id="actUnit">
+        <option value="count">Count</option>
+        <option value="ml">ml</option>
+        <option value="minutes">minutes</option>
+      </select>
+    </div>
 
-    <select id="actUnit">
-      <option value="count">Count</option>
-      <option value="ml">ml</option>
-      <option value="minutes">minutes</option>
-    </select>
-
-    <input type="time" id="actStart">
-    <input type="time" id="actEnd">
+    <div class="row">
+      <input type="time" id="actStart">
+      <input type="time" id="actEnd">
+    </div>
 
     <select id="actFreq">
       <option value="daily">Daily</option>
