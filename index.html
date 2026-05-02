@@ -15,6 +15,9 @@
   <meta name="apple-mobile-web-app-title" content="Tracker">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -25,8 +28,8 @@
 
   <symbol id="icon-log" viewBox="0 0 64 64">
     <rect x="14" y="10" width="36" height="44" rx="6" fill="currentColor"/>
-    <rect x="20" y="20" width="24" height="4" fill="#fff"/>
-    <rect x="20" y="30" width="24" height="4" fill="#fff"/>
+    <rect x="20" y="20" width="24" height="4" fill="rgba(255,255,255,0.5)"/>
+    <rect x="20" y="30" width="24" height="4" fill="rgba(255,255,255,0.5)"/>
   </symbol>
 
   <symbol id="icon-summary" viewBox="0 0 64 64">
@@ -51,6 +54,50 @@
   </symbol>
 
 </svg>
+
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg><use xlink:href="#icon-log"/></svg>
+        </div>
+        <span class="logo-text">Tracker</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" data-target="log">
+        <svg><use xlink:href="#icon-log"/></svg>
+        <span>Log Activity</span>
+      </button>
+      <button class="nav-btn" data-target="summary">
+        <svg><use xlink:href="#icon-summary"/></svg>
+        <span>Insights</span>
+      </button>
+      <button class="nav-btn" data-target="profile">
+        <svg><use xlink:href="#icon-profile"/></svg>
+        <span>Manage</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="sidebarToggleTheme" class="theme-btn">
+        <span class="theme-label">Dark Mode</span>
+        <div class="toggle-switch"></div>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    <header class="app-header">
+      <div class="header-left">
+        <h1 id="page-title">Log Activity</h1>
+      </div>
+      <div class="header-right">
+        <div class="user-badge">
+          <svg><use xlink:href="#icon-profile"/></svg>
+        </div>
+      </div>
+    </header>
 
 <main>
 
@@ -171,6 +218,8 @@
   </section>
 
 </main>
+</div>
+</div>
 
 <nav class="bottom-nav">
   <button class="nav-btn active" data-target="log">

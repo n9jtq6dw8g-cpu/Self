@@ -48,20 +48,47 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   // month input left as native <input type="month"> (sMonth)
 
-  /* NAV handlers (unchanged) */
-  document.querySelectorAll(".nav-btn").forEach(b => {
+  /* NAV handlers */
+  const pageTitle = document.getElementById("page-title");
+  const navButtons = document.querySelectorAll(".nav-btn");
+
+  const titles = {
+    log: "Log Activity",
+    summary: "Insights & Summary",
+    profile: "Settings & Profile"
+  };
+
+  navButtons.forEach(b => {
     b.onclick = () => {
-      document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
-      b.classList.add("active");
+      const target = b.dataset.target;
+
+      // Update all nav buttons (sidebar and bottom nav)
+      navButtons.forEach(x => {
+        if (x.dataset.target === target) x.classList.add("active");
+        else x.classList.remove("active");
+      });
+
+      // Show screen
       document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-      document.getElementById("screen-" + b.dataset.target).classList.add("active");
-      if (b.dataset.target === "summary") renderSummary();
+      document.getElementById("screen-" + target).classList.add("active");
+
+      // Update header title
+      if (pageTitle) pageTitle.textContent = titles[target] || "Tracker";
+
+      if (target === "summary") renderSummary();
     };
   });
 
-  /* THEME toggle (keeps existing behaviour) */
+  /* THEME toggle */
   const toggleThemeBtn = document.getElementById("toggleTheme");
-  if (toggleThemeBtn) toggleThemeBtn.onclick = () => document.body.classList.toggle("dark");
+  const sidebarToggleTheme = document.getElementById("sidebarToggleTheme");
+
+  const toggleDark = () => {
+    document.body.classList.toggle("dark");
+  };
+
+  if (toggleThemeBtn) toggleThemeBtn.onclick = toggleDark;
+  if (sidebarToggleTheme) sidebarToggleTheme.onclick = toggleDark;
 
   /* BACKUP buttons (keeps existing behavior, slightly safer revoke) */
   document.getElementById("downloadBackup").onclick = () => {
@@ -313,12 +340,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderEntry() {
     const a = load(ACT)[sel.value];
     if (!a) {
-      entry.innerHTML = `<div style="color:var(--muted)">Create an activity in Profile first.</div>`;
+      entry.innerHTML = `<div style="color:var(--text-muted); margin-top:16px;">Create an activity in Profile first.</div>`;
       return;
     }
-    entry.innerHTML = `<div class="log-input" style="display:flex;gap:10px;align-items:center;">
-        <input id="val" type="number" placeholder="${a.unit}" style="flex:1;">
-        <button id="addBtn">Add</button>
+    entry.innerHTML = `<div class="log-input">
+        <input id="val" type="number" placeholder="Enter ${a.unit}" style="flex:1;">
+        <button id="addBtn">Add Entry</button>
       </div>`;
     document.getElementById("addBtn").onclick = () => {
       const raw = document.getElementById("val").value;
